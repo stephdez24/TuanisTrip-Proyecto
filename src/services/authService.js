@@ -1,23 +1,19 @@
 const API_URL = import.meta.env.VITE_API_URL
 
-export async function loginUser(correo, password) {
+export async function loginUser(email, password) {
     const response = await fetch(`${API_URL}/usuarios/login`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            correo,
+            email,
             password
         })
     })
 
     if (!response.ok) {
-        const data = await response.json().catch(() => null)
-
-        throw new Error(
-            data?.message || "Correo o contraseña incorrectos."
-        )
+        throw new Error("Correo o contraseña incorrectos.")
     }
 
     return await response.json()
@@ -46,11 +42,8 @@ export async function registerUser(userData) {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            nombre: userData.nombre,
-            primerApellido: userData.primerApellido,
-            segundoApellido: userData.segundoApellido,
-            correo: userData.correo,
-            telefono: userData.telefono,
+            fullName: userData.fullName,
+            email: userData.email,
             password: userData.password
         })
     })
@@ -59,7 +52,8 @@ export async function registerUser(userData) {
         const data = await response.json().catch(() => null)
 
         throw new Error(
-            data?.message || "No se pudo registrar el usuario."
+            data?.message ||
+            "No se pudo registrar el usuario."
         )
     }
 
