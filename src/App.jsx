@@ -1,29 +1,47 @@
-import { Navigate, Route, Routes } from "react-router-dom"
-import LoginPage from "./pages/LoginPage"
+import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { Toaster } from "@/components/ui/sonner"
+
+import Layout from "@/components/Layout"
+import RoleRoute from "@/auth/RoleRoute"
+
+import HomePage from "@/pages/HomePage"
+import LoginPage from "@/pages/LoginPage"
+import RegistroPage from "@/pages/RegistroPage"
+import PerfilPage from "@/pages/PerfilPage"
+import UnauthorizedPage from "@/pages/UnauthorizedPage"
+import NotFoundPage from "@/pages/NotFoundPage"
 
 function App() {
     return (
-        <Routes>
-            <Route
-                path="/"
-                element={<Navigate to="/login" replace />}
-            />
+        <BrowserRouter>
+            <Toaster richColors position="top-center" />
 
-            <Route
-                path="/login"
-                element={<LoginPage />}
-            />
+            <Routes>
+                <Route element={<Layout />}>
+                    {/* Públicas */}
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/registro" element={<RegistroPage />} />
+                    <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-            <Route
-                path="/register"
-                element={<div>Registro</div>}
-            />
+                    {/* Requieren solo estar logueado (cualquier rol) */}
+                    <Route element={<RoleRoute />}>
+                        <Route path="/perfil" element={<PerfilPage />} />
+                    </Route>
 
-            <Route
-                path="/unauthorized"
-                element={<div>Acceso no autorizado</div>}
-            />
-        </Routes>
+                    {/*
+                        A medida que avancemos en el checklist, cada módulo nuevo
+                        entra aquí envuelto en <RoleRoute roles={[...]}>, ej.:
+
+                        <Route element={<RoleRoute roles={["Administrador"]} />}>
+                            <Route path="/extras" element={<ExtrasPage />} />
+                        </Route>
+                    */}
+
+                    <Route path="*" element={<NotFoundPage />} />
+                </Route>
+            </Routes>
+        </BrowserRouter>
     )
 }
 
