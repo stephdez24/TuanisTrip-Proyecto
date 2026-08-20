@@ -25,6 +25,10 @@ import {
     CardContent,
 } from "@/components/ui/card"
 
+// Registro público de CLIENTES únicamente. El API fuerza ese rol del lado
+// del servidor sin importar qué mandemos aquí — no hay forma de crear un
+// Administrador o Empleado desde este formulario (por diseño del backend,
+// coincide con lo que pide el enunciado).
 export default function RegistroPage() {
     const { register } = useAuth()
     const navigate = useNavigate()
@@ -49,6 +53,8 @@ export default function RegistroPage() {
             toast.success("Cuenta creada correctamente. Ahora puedes iniciar sesión.")
             navigate("/login")
         } catch (error) {
+            // 409 = correo duplicado, 400 = datos inválidos que Zod no haya
+            // atrapado del lado del cliente; cualquiera de los dos cae aquí.
             toast.error(error.message || "No se pudo completar el registro.")
         } finally {
             setEnviando(false)
@@ -82,6 +88,8 @@ export default function RegistroPage() {
                                 )}
                             />
 
+                            {/* Los dos apellidos en la misma fila para ahorrar espacio
+                                vertical; segundoApellido es opcional según el DTO del API. */}
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}

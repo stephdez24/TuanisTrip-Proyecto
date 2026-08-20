@@ -2,10 +2,16 @@ import { useAuth } from "@/auth/useAuth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
+// Cumple el requisito "Consultar información del usuario autenticado" del
+// módulo de Gestión de Usuarios. Es una ruta protegida (ver App.jsx,
+// envuelta en <RoleRoute>), así que si llegamos hasta aquí es porque
+// SIEMPRE hay una sesión activa.
 export default function PerfilPage() {
     const { user } = useAuth()
 
-    if (!user) return null // RoleRoute ya garantiza sesión activa antes de llegar aquí
+    // Guarda extra por si acaso: normalmente nunca se ve, porque RoleRoute
+    // ya garantiza que hay sesión antes de renderizar esta página.
+    if (!user) return null
 
     return (
         <div className="mx-auto max-w-xl px-4 py-12">

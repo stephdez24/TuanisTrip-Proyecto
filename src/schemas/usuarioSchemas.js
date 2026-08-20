@@ -1,8 +1,10 @@
 import { z } from "zod"
 
-// Convierte "" en undefined antes de validar, para que un campo opcional
-// vacío no dispare el .min() (igual de estricto que el DTO del API, que
-// también trata estos campos como opcionales).
+// Convierte "" en undefined antes de validar. Sin esto, un campo opcional
+// vacío (ej. dejar el teléfono en blanco) dispararía el error de .min()
+// como si fuera un valor inválido en vez de "no lo llenó". Refleja el mismo
+// comportamiento "opcional" que tienen segundoApellido/telefono en el DTO
+// real del API (registerClienteSchema).
 function campoOpcional(min, max, mensajeMin, mensajeMax) {
     return z.preprocess(
         (valor) => (typeof valor === "string" && valor.trim() === "" ? undefined : valor),
@@ -53,6 +55,8 @@ export const registroSchema = z.object({
         .max(100, "La contraseña no puede superar 100 caracteres"),
 })
 
+// Reglas más simples que el registro: el login no valida formato de
+// contraseña (eso ya se validó al crear la cuenta), solo que no venga vacía.
 export const loginSchema = z.object({
     correo: z.email("El correo electrónico no tiene un formato válido"),
     password: z.string().min(1, "La contraseña es obligatoria"),
