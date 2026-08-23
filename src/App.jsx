@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { useEffect } from "react"
 import { Toaster } from "@/components/ui/sonner"
+import { hidratarImagenesSemilla } from "@/lib/imagenLocal"
 
 import Layout from "@/components/Layout"
 import RoleRoute from "@/auth/RoleRoute"
@@ -14,10 +16,21 @@ import TourFormPage from "@/pages/TourFormPage"
 import ExtrasPage from "@/pages/ExtrasPage"
 import ExtraDetailPage from "@/pages/ExtraDetailPage"
 import ExtraFormPage from "@/pages/ExtraFormPage"
+import GuiasPage from "@/pages/GuiasPage"
+import GuiaDetailPage from "@/pages/GuiaDetailPage"
+import GuiaFormPage from "@/pages/GuiaFormPage"
+import ReservasPage from "@/pages/ReservasPage"
+import ReservaDetailPage from "@/pages/ReservaDetailPage"
 import UnauthorizedPage from "@/pages/UnauthorizedPage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
 function App() {
+    // Se ejecuta una sola vez al abrir la app: completa localStorage con
+    // las imágenes del script de datos demo, si todavía no están.
+    useEffect(() => {
+        hidratarImagenesSemilla()
+    }, [])
+
     return (
         <BrowserRouter>
             {/* Toaster vive aquí, fuera de <Routes>, para que los toast.success()/
@@ -37,11 +50,15 @@ function App() {
                     <Route path="/tours/:id" element={<TourDetailPage />} />
                     <Route path="/extras" element={<ExtrasPage />} />
                     <Route path="/extras/:id" element={<ExtraDetailPage />} />
+                    <Route path="/guias" element={<GuiasPage />} />
+                    <Route path="/guias/:id" element={<GuiaDetailPage />} />
                     <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
                     {/* ---------- Requieren solo estar logueado (cualquier rol) ---------- */}
                     <Route element={<RoleRoute />}>
                         <Route path="/perfil" element={<PerfilPage />} />
+                        <Route path="/reservas" element={<ReservasPage />} />
+                        <Route path="/reservas/:id" element={<ReservaDetailPage />} />
                     </Route>
 
                     {/* ---------- Solo Administrador ----------
@@ -53,6 +70,8 @@ function App() {
                         <Route path="/tours/:id/editar" element={<TourFormPage />} />
                         <Route path="/extras/nuevo" element={<ExtraFormPage />} />
                         <Route path="/extras/:id/editar" element={<ExtraFormPage />} />
+                        <Route path="/guias/nuevo" element={<GuiaFormPage />} />
+                        <Route path="/guias/:id/editar" element={<GuiaFormPage />} />
                     </Route>
 
                     {/*

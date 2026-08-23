@@ -1,0 +1,27 @@
+{
+  "tours": {
+    "1": "/images/tours/CatarataFortunaTour.png",
+    "2": "/images/tours/VolcanArenalTour.png",
+    "3": "/images/tours/SnorkelTour2.png",
+    "4": "/images/tours/CatamaranBahiaBallenaTour.jpg",
+    "5": "/images/tours/CanopyMonteverdeTour.png",
+    "6": "/images/tours/MontarCaballoTour.png",
+    "7": "/images/tours/SanJoseTour.jpg",
+    "8": "/images/tours/TourGastronomico.png",
+    "9": "/images/tours/FortinHerediaTour.jpg",
+    "10": "/images/tours/ManglarTour.jpg",
+    "11": "/images/tours/SnorkelTour.jpg",
+    "12": "/images/tours/AtardecerTamarindoTour.jpg"
+  },
+  "guias": {
+    "1": "/images/guias/sofia-vargas.png",
+    "2": "/images/guias/diego-rojas.png",
+    "3": "/images/guias/mariana-lopez.png",
+    "4": "/images/guias/carlos-jimenez.png",
+    "5": "/images/guias/andrea-solano.png",
+    "6": "/images/guias/luis-mora.png",
+    "7": "/images/guias/valeria-castro.png",
+    "8": "/images/guias/pablo-herrera.png",
+    "9": "/images/guias/fernanda-ruiz.png"
+  }
+}

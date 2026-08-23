@@ -32,7 +32,76 @@ export function setImagenLocal(servicioId, url) {
     if (url) {
         mapa[servicioId] = url;
     } else {
-    delete mapa[servicioId];
+        delete mapa[servicioId];
     }
     guardarMapa(mapa);
+}
+
+// ------------------------------------------------------------------
+// Hidratación desde datos "semilla" (public/data/imagenes-seed.json)
+// ------------------------------------------------------------------
+// El script de Node que crea los tours/guías demo no puede escribir en
+// localStorage (corre fuera del navegador). En su lugar, genera ese
+// archivo JSON con { tours: {id: url}, guias: {id: url} }. Esta función
+// lo carga UNA VEZ, y solo completa las entradas que todavía no existen
+// en localStorage — así no pisa una imagen que alguien ya cambió a mano
+// desde el formulario.
+const STORAGE_KEY_GUIAS = "tuanisTripImagenesGuias";
+
+function leerMapaGuias() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY_GUIAS)) ?? {};
+    } catch {
+        return {};
+    }
+}
+
+function guardarMapaGuias(mapa) {
+    localStorage.setItem(STORAGE_KEY_GUIAS, JSON.stringify(mapa));
+}
+
+export function getImagenLocalGuia(empleadoId) {
+    return leerMapaGuias()[empleadoId] ?? null;
+}
+
+export function setImagenLocalGuia(empleadoId, url) {
+    const mapa = leerMapaGuias();
+    if (url) {
+        mapa[empleadoId] = url;
+    } else {
+        delete mapa[empleadoId];
+    }
+    guardarMapaGuias(mapa);
+}
+
+export async function hidratarImagenesSemilla() {
+    try {
+        const respuesta = await fetch("/data/imagenes-seed.json");
+        if (!respuesta.ok) return; // el archivo no existe todavía, no pasa nada
+
+        const semilla = await respuesta.json();
+
+        const mapaTours = leerMapa();
+        let cambioTours = false;
+        for (const [id, url] of Object.entries(semilla.tours ?? {})) {
+        if (!mapaTours[id]) {
+            mapaTours[id] = url;
+            cambioTours = true;
+        }
+    }
+    if (cambioTours) guardarMapa(mapaTours);
+
+    const mapaGuias = leerMapaGuias();
+    let cambioGuias = false;
+    for (const [id, url] of Object.entries(semilla.guias ?? {})) {
+        if (!mapaGuias[id]) {
+            mapaGuias[id] = url;
+            cambioGuias = true;
+        }
+    }
+    if (cambioGuias) guardarMapaGuias(mapaGuias);
+    } catch {
+        // Sin conexión o archivo ausente: no es crítico, la app sigue
+        // funcionando con las imágenes de relleno por defecto.
+    }
 }

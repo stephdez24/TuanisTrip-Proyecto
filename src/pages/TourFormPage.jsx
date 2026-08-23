@@ -183,7 +183,17 @@ export default function TourFormPage() {
                                         >
                                             <FormControl>
                                                 <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Selecciona una categoría" />
+                                                    {/* Base UI (a diferencia de Radix) no traduce
+                                                        automáticamente el value seleccionado a su
+                                                        etiqueta — hay que decirle cómo hacerlo con
+                                                        esta función. Sin esto, muestra el id crudo. */}
+                                                    <SelectValue placeholder="Selecciona una categoría">
+                                                        {(value) =>
+                                                            especialidades?.find(
+                                                                (e) => String(e.id) === value
+                                                            )?.nombre
+                                                        }
+                                                    </SelectValue>
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
