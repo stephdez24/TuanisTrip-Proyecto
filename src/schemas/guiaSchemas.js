@@ -46,4 +46,19 @@ export const guiaSchema = z.object({
     servicioIds: z
         .array(z.coerce.number())
         .min(1, "Selecciona al menos un tour que este guía pueda atender"),
+
+    // BYPASS TEMPORAL, igual que en tourSchemas.js: el modelo de Empleado
+    // no tiene campo de imagen en el API. Se guarda aparte, del lado del
+    // cliente (lib/imagenLocal.js) — nunca se manda al backend.
+    imagenUrl: z
+        .string()
+        .trim()
+        .refine(
+            (valor) =>
+                valor === "" ||
+                valor.startsWith("/") ||
+                /^https?:\/\//.test(valor),
+            "Debe ser una URL (https://...) o una ruta local que empiece con /"
+        )
+        .optional(),
 })

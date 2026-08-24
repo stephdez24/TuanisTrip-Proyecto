@@ -49,10 +49,15 @@ export const registroSchema = z.object({
         "El teléfono no puede superar 25 caracteres"
     ),
 
+    // Espeja passwordSchema del API exactamente (usuario.dto.ts): no
+    // basta con el largo, también exige mayúscula + minúscula + número.
     password: z
         .string()
         .min(8, "La contraseña debe tener al menos 8 caracteres")
-        .max(100, "La contraseña no puede superar 100 caracteres"),
+        .max(100, "La contraseña no puede superar 100 caracteres")
+        .regex(/[A-Z]/, "La contraseña debe contener al menos una letra mayúscula")
+        .regex(/[a-z]/, "La contraseña debe contener al menos una letra minúscula")
+        .regex(/[0-9]/, "La contraseña debe contener al menos un número"),
 })
 
 // Reglas más simples que el registro: el login no valida formato de

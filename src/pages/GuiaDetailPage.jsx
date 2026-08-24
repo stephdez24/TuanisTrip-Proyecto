@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom"
 import { useAuth } from "@/auth/useAuth"
 import { useFetch } from "@/lib/useFetch"
 import { empleadosService } from "@/services/empleadosService"
-import { getImagenLocalGuia } from "@/lib/imagenLocal"
+import { getImagenLocalGuia, getInstagramGuia } from "@/lib/imagenLocal"
 
 const IMAGEN_POR_DEFECTO =
     "https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=800&auto=format&fit=crop"
@@ -72,6 +72,34 @@ export default function GuiaDetailPage() {
                     {guia.descripcion && (
                         <p className="text-muted-foreground">{guia.descripcion}</p>
                     )}
+
+                    {/* WhatsApp: usa el teléfono REAL del usuario (ya existe en el
+                        sistema). 506 = código de país de Costa Rica. Quitamos
+                        cualquier caracter que no sea dígito antes de armar el link. */}
+                    <div className="flex flex-wrap gap-3">
+                        {guia.usuario?.telefono && (
+                            <a
+                                href={`https://wa.me/506${guia.usuario.telefono.replace(/\D/g, "")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50"
+                            >
+                                WhatsApp: {guia.usuario.telefono}
+                            </a>
+                        )}
+                        {/* Instagram: bypass local, no existe ese campo en el
+                            backend — ver lib/imagenLocal.js. */}
+                        {getInstagramGuia(guia.id) && (
+                            <a
+                                href={`https://instagram.com/${getInstagramGuia(guia.id)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium text-pink-700 hover:bg-pink-50"
+                            >
+                                @{getInstagramGuia(guia.id)}
+                            </a>
+                        )}
+                    </div>
 
                     <div>
                         <p className="mb-2 text-sm font-medium">Tours que puede atender</p>

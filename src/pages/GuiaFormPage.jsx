@@ -10,6 +10,7 @@ import { usuariosService } from "@/services/usuariosService"
 import { especialidadesService } from "@/services/especialidadesService"
 import { serviciosService } from "@/services/serviciosService"
 import { useFetch } from "@/lib/useFetch"
+import { getImagenLocalGuia, setImagenLocalGuia } from "@/lib/imagenLocal"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -61,6 +62,7 @@ export default function GuiaFormPage() {
             codigoEmpleado: "",
             descripcion: "",
             servicioIds: [],
+            imagenUrl: "",
         },
     })
 
@@ -77,6 +79,7 @@ export default function GuiaFormPage() {
                     codigoEmpleado: guia.codigoEmpleado,
                     descripcion: guia.descripcion ?? "",
                     servicioIds: guia.servicios?.map((s) => s.id) ?? [],
+                    imagenUrl: getImagenLocalGuia(guia.id) ?? "",
                 })
             })
             .catch((err) => {
@@ -94,15 +97,23 @@ export default function GuiaFormPage() {
     const usuariosDisponibles = usuariosEmpleado?.filter((u) => !u.empleado) ?? []
 
     async function onSubmit(valores) {
+        // Igual que en TourFormPage: imagenUrl NO se manda al API, se
+        // guarda aparte en el bypass local.
+        const { imagenUrl, ...datosGuia } = valores
         setEnviando(true)
         try {
+            let guiaId = id
+
             if (esEdicion) {
-                await empleadosService.actualizar(id, valores)
+                await empleadosService.actualizar(id, datosGuia)
                 toast.success("Guía actualizado correctamente")
             } else {
-                await empleadosService.crear(valores)
+                const response = await empleadosService.crear(datosGuia)
+                guiaId = response.data.id
                 toast.success("Guía creado correctamente")
             }
+
+            setImagenLocalGuia(guiaId, imagenUrl || null)
             navigate("/guias")
         } catch (err) {
             toast.error(err.message || "No se pudo guardar el guía")
@@ -145,6 +156,7 @@ export default function GuiaFormPage() {
                                                         esta función para mostrar la etiqueta en vez del id. */}
                                                     <SelectValue placeholder="Selecciona un usuario">
                                                         {(value) => {
+                                                            if (!value) return "Selecciona un usuario"
                                                             const lista = esEdicion
                                                                 ? usuariosEmpleado
                                                                 : usuariosDisponibles
@@ -206,9 +218,11 @@ export default function GuiaFormPage() {
                                                 <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Selecciona una especialidad">
                                                         {(value) =>
-                                                            especialidades?.find(
-                                                                (e) => String(e.id) === value
-                                                            )?.nombre
+                                                            !value
+                                                                ? "Selecciona una especialidad"
+                                                                : especialidades?.find(
+                                                                      (e) => String(e.id) === value
+                                                                  )?.nombre
                                                         }
                                                     </SelectValue>
                                                 </SelectTrigger>
@@ -286,6 +300,24 @@ export default function GuiaFormPage() {
                                                 )
                                             })}
                                         </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="imagenUrl"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>URL de imagen (temporal)</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="url"
+                                                placeholder="https://ejemplo.com/foto.jpg o /images/guias/archivo.jpg"
+                                                {...field}
+                                            />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}

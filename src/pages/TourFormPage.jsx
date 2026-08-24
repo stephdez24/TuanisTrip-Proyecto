@@ -189,9 +189,11 @@ export default function TourFormPage() {
                                                         esta función. Sin esto, muestra el id crudo. */}
                                                     <SelectValue placeholder="Selecciona una categoría">
                                                         {(value) =>
-                                                            especialidades?.find(
-                                                                (e) => String(e.id) === value
-                                                            )?.nombre
+                                                            !value
+                                                                ? "Selecciona una categoría"
+                                                                : especialidades?.find(
+                                                                      (e) => String(e.id) === value
+                                                                  )?.nombre
                                                         }
                                                     </SelectValue>
                                                 </SelectTrigger>

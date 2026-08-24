@@ -1,6 +1,10 @@
-import { Link, NavLink, useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { Link, NavLink } from "react-router-dom"
+import { Menu, X } from "lucide-react"
 import { useAuth } from "@/auth/useAuth"
 import { Button } from "@/components/ui/button"
+import ThemeToggle from "@/components/ThemeToggle"
+import UserMenu from "@/components/UserMenu"
 
 // Enlaces visibles para cada rol. Un usuario sin permiso para un módulo
 // simplemente no ve el enlace (además de que RoleRoute bloquea el acceso
@@ -10,11 +14,13 @@ const NAV_POR_ROL = {
         { to: "/", label: "Inicio" },
         { to: "/tours", label: "Tours" },
         { to: "/guias", label: "Guías" },
+        { to: "/horarios", label: "Horarios" },
     ],
     Cliente: [
         { to: "/", label: "Inicio" },
         { to: "/tours", label: "Tours" },
         { to: "/guias", label: "Guías" },
+        { to: "/horarios", label: "Horarios" },
         { to: "/favoritos", label: "Favoritos" },
         { to: "/reservas", label: "Mis reservas" },
     ],
@@ -22,74 +28,112 @@ const NAV_POR_ROL = {
         { to: "/", label: "Inicio" },
         { to: "/tours", label: "Tours" },
         { to: "/guias", label: "Guías" },
+        { to: "/horarios", label: "Horarios" },
         { to: "/reservas", label: "Reservas" },
+        { to: "/mi-agenda", label: "Mi agenda" },
+        { to: "/restricciones", label: "Bloqueos y temporadas" },
     ],
     Administrador: [
         { to: "/", label: "Inicio" },
         { to: "/tours", label: "Tours" },
         { to: "/extras", label: "Extras" },
         { to: "/guias", label: "Guías" },
+        { to: "/horarios", label: "Horarios" },
         { to: "/reservas", label: "Reservas" },
+        { to: "/restricciones", label: "Bloqueos y temporadas" },
         { to: "/agenda", label: "Agenda del día" },
     ],
 }
 
 export default function Navbar() {
-    const { isAuthenticated, rol, user, logout } = useAuth()
-    const navigate = useNavigate()
+    const { rol } = useAuth()
+    const [menuAbierto, setMenuAbierto] = useState(false)
 
     const enlaces = NAV_POR_ROL[rol ?? "invitado"] ?? NAV_POR_ROL.invitado
 
-    function handleLogout() {
-        logout()
-        navigate("/login")
+    // Cierra el menú al navegar, para no dejarlo abierto tapando la
+    // pantalla siguiente.
+    function handleNavClick() {
+        setMenuAbierto(false)
     }
 
+    // Cierra el menú con Escape, igual que cualquier panel/diálogo estándar.
+    useEffect(() => {
+        if (!menuAbierto) return
+
+        function handleKeyDown(e) {
+            if (e.key === "Escape") setMenuAbierto(false)
+        }
+
+        window.addEventListener("keydown", handleKeyDown)
+        return () => window.removeEventListener("keydown", handleKeyDown)
+    }, [menuAbierto])
+
     return (
-        <header className="border-b bg-card">
+        // bg-primary / text-primary-foreground: en modo claro es el verde
+        // oscuro de marca con texto blanco (igual al mini-proyecto original);
+        // en modo oscuro, las variables de tema invierten esto a dorado con
+        // texto verde oscuro — no hace falta lógica extra, ya se adapta sola.
+        <header className="sticky top-0 z-40 bg-primary text-primary-foreground">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-                <Link to="/" className="text-xl font-semibold">
+                <Link
+                    to="/"
+                    className="flex items-center gap-2 text-xl font-semibold"
+                    onClick={handleNavClick}
+                >
+                    <img src="/images/logoTuanisTrip.png" alt="" className="h-9 w-9" />
                     Tuanis Trip
                 </Link>
 
-                <nav className="hidden items-center gap-6 md:flex">
-                    {enlaces.map((enlace) => (
-                        <NavLink
-                            key={enlace.to}
-                            to={enlace.to}
-                            className={({ isActive }) =>
-                                `text-sm font-medium transition-colors hover:text-primary ${
-                                    isActive ? "text-primary" : "text-muted-foreground"
-                                }`
-                            }
-                        >
-                            {enlace.label}
-                        </NavLink>
-                    ))}
-                </nav>
+                {/* El menú de navegación siempre vive detrás de la hamburguesa,
+                    en cualquier tamaño de pantalla — con hasta 8 enlaces para
+                    Administrador, un navbar horizontal se veía saturado incluso
+                    en escritorio. El header solo muestra: logo, tema, y el
+                    menú de usuario (avatar + estado de sesión). */}
+                <div className="flex items-center gap-1">
+                    <ThemeToggle />
+                    <UserMenu />
 
-                <div className="flex items-center gap-3">
-                    {isAuthenticated ? (
-                        <>
-                            <span className="hidden text-sm text-muted-foreground sm:inline">
-                                Hola, {user?.nombre}
-                            </span>
-                            <Button variant="outline" size="sm" onClick={handleLogout}>
-                                Cerrar sesión
-                            </Button>
-                        </>
-                    ) : (
-                        <>
-                            <Button variant="ghost" size="sm" asChild>
-                                <Link to="/login">Iniciar sesión</Link>
-                            </Button>
-                            <Button size="sm" asChild>
-                                <Link to="/registro">Crear cuenta</Link>
-                            </Button>
-                        </>
-                    )}
+                    {/* Botón hamburguesa: SIEMPRE visible, es el único punto de
+                        entrada a la navegación (sin lista horizontal aparte). */}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                        onClick={() => setMenuAbierto((abierto) => !abierto)}
+                        aria-label={menuAbierto ? "Cerrar menú" : "Abrir menú"}
+                        aria-expanded={menuAbierto}
+                    >
+                        {menuAbierto ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                    </Button>
                 </div>
             </div>
+
+            {/* Panel del menú: mismo fondo verde/dorado, con un borde superior
+                sutil para separarlo visualmente del header. Se comporta igual
+                en cualquier ancho de pantalla. */}
+            {menuAbierto && (
+                <div className="border-t border-primary-foreground/15 bg-primary">
+                    <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-3">
+                        {enlaces.map((enlace) => (
+                            <NavLink
+                                key={enlace.to}
+                                to={enlace.to}
+                                onClick={handleNavClick}
+                                className={({ isActive }) =>
+                                    `rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                                        isActive
+                                            ? "bg-primary-foreground/10 text-ring"
+                                            : "text-primary-foreground/80 hover:bg-primary-foreground/10"
+                                    }`
+                                }
+                            >
+                                {enlace.label}
+                            </NavLink>
+                        ))}
+                    </nav>
+                </div>
+            )}
         </header>
     )
 }

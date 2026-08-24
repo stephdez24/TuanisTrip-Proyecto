@@ -6,6 +6,7 @@ import { toast } from "sonner"
 
 import { useAuth } from "@/auth/useAuth"
 import { registroSchema } from "@/schemas/usuarioSchemas"
+import PasswordRequirementsChecklist from "@/components/PasswordRequirementsChecklist"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,6 +46,11 @@ export default function RegistroPage() {
             password: "",
         },
     })
+
+    // Se lee en vivo para alimentar el checklist de requisitos debajo del
+    // campo — se actualiza en cada tecla, sin esperar a que el usuario
+    // intente enviar el formulario.
+    const passwordActual = form.watch("password")
 
     async function onSubmit(valores) {
         setEnviando(true)
@@ -161,6 +167,7 @@ export default function RegistroPage() {
                                         <FormControl>
                                             <Input type="password" placeholder="••••••••" {...field} />
                                         </FormControl>
+                                        <PasswordRequirementsChecklist password={passwordActual} />
                                         <FormMessage />
                                     </FormItem>
                                 )}

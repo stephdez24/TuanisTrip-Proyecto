@@ -8,8 +8,8 @@
 // REQUISITOS ANTES DE CORRERLO:
 //   1. El backend debe estar corriendo (npm run server en la carpeta api/).
 //   2. Debes haber corrido `npx prisma db seed` con el seed.ts actualizado
-//      (que ya trae las especialidades Playa/Montaña/Ciudad y los 9
-//      usuarios Empleado con los correos que usa este script).
+//      (que ya trae las especialidades Playa/Montaña/Ciudad y los usuarios
+//      Empleado con los correos que usa este script).
 //   3. Copia este archivo en la RAÍZ de tu proyecto de React (junto a
 //      package.json), para que "./public/data/..." apunte al lugar correcto.
 //
@@ -41,7 +41,7 @@ const TOURS = [
         nombre: "Volcán Arenal + Termales",
         descripcion: "Observa el volcán Arenal de cerca y relájate en aguas termales naturales al atardecer.",
         precioBase: 75000,
-        duracionMinutos: 480, // original: 10h (600min) -> el API solo permite hasta 480
+        duracionMinutos: 480,
         especialidad: "Montaña",
         imagen: "/images/tours/VolcanArenalTour.png",
     },
@@ -132,15 +132,15 @@ const TOURS = [
 // EXACTO con lo que crea prisma/seed.ts).
 // ------------------------------------------------------------------
 const GUIAS = [
-    { correo: "sofia.vargas@tuanistrip.com", codigo: "GUIA-001", especialidad: "Playa", descripcion: "Especialista en Snorkel. Idiomas: Español, Inglés. 6 años de experiencia. Apasionada por la vida marina del Pacífico, lleva a sus grupos a los mejores arrecifes poco visitados de la zona.", imagen: "/images/guias/sofia-vargas.png" },
-    { correo: "diego.rojas@tuanistrip.com", codigo: "GUIA-002", especialidad: "Playa", descripcion: "Especialista en Kayak. Idiomas: Español, Portugués. 8 años de experiencia. Guía certificado en rescate acuático, conoce los manglares y esteros más tranquilos para principiantes.", imagen: "/images/guias/diego-rojas.png" },
-    { correo: "mariana.lopez@tuanistrip.com", codigo: "GUIA-003", especialidad: "Playa", descripcion: "Especialista en Paseo en Catamarán. Idiomas: Español, Inglés, Francés. 10 años de experiencia. Guía paseos en catamarán y procura que cada recorrido sea cómodo y seguro para todos.", imagen: "/images/guias/mariana-lopez.png" },
-    { correo: "carlos.jimenez@tuanistrip.com", codigo: "GUIA-004", especialidad: "Montaña", descripcion: "Especialista en Senderismo. Idiomas: Español, Inglés. 9 años de experiencia. Biólogo de formación, hace énfasis en flora y fauna durante las caminatas por bosque nuboso y volcanes.", imagen: "/images/guias/carlos-jimenez.png" },
-    { correo: "andrea.solano@tuanistrip.com", codigo: "GUIA-005", especialidad: "Montaña", descripcion: "Especialista en Canopy. Idiomas: Español, Francés. 7 años de experiencia. Instructora certificada en rappel y tirolesa, prioriza la seguridad sin quitarle la adrenalina al recorrido.", imagen: "/images/guias/andrea-solano.png" },
-    { correo: "luis.mora@tuanistrip.com", codigo: "GUIA-006", especialidad: "Montaña", descripcion: "Especialista en Montar a caballo. Idiomas: Español, Inglés, Portugués. 12 años de experiencia. Cuenta con amplia experiencia guiando cabalgatas por diferentes rutas y paisajes naturales.", imagen: "/images/guias/luis-mora.png" },
-    { correo: "valeria.castro@tuanistrip.com", codigo: "GUIA-007", especialidad: "Ciudad", descripcion: "Especialista en City Tour. Idiomas: Español, Inglés. 5 años de experiencia. Historiadora local, conecta cada parada del recorrido urbano con anécdotas reales de la San José de antes.", imagen: "/images/guias/valeria-castro.png" },
-    { correo: "pablo.herrera@tuanistrip.com", codigo: "GUIA-008", especialidad: "Ciudad", descripcion: "Especialista en Tour Gastronómico. Idiomas: Español, Francés. 11 años de experiencia. Ex chef de restaurante, selecciona personalmente cada parada del tour según la temporada de ingredientes.", imagen: "/images/guias/pablo-herrera.png" },
-    { correo: "fernanda.ruiz@tuanistrip.com", codigo: "GUIA-009", especialidad: "Ciudad", descripcion: "Especialista en Tour Histórico y Cultural. Idiomas: Español, Inglés, Portugués. 8 años de experiencia. Egresada de Patrimonio Cultural, profundiza en los museos y barrios históricos menos visitados por turistas.", imagen: "/images/guias/fernanda-ruiz.png" },
+    { correo: "sofia.vargas@tuanistrip.com", codigo: "GUIA-001", especialidad: "Playa", descripcion: "Especialista en Snorkel. Idiomas: Español, Inglés. 6 años de experiencia. Apasionada por la vida marina del Pacífico, lleva a sus grupos a los mejores arrecifes poco visitados de la zona.", imagen: "/images/guias/sofia-vargas.png", instagram: "sofia.vargas.tours" },
+    { correo: "diego.rojas@tuanistrip.com", codigo: "GUIA-002", especialidad: "Playa", descripcion: "Especialista en Kayak. Idiomas: Español, Portugués. 8 años de experiencia. Guía certificado en rescate acuático, conoce los manglares y esteros más tranquilos para principiantes.", imagen: "/images/guias/diego-rojas.png", instagram: "diego.rojas.kayak" },
+    { correo: "mariana.lopez@tuanistrip.com", codigo: "GUIA-003", especialidad: "Playa", descripcion: "Especialista en Paseo en Catamarán. Idiomas: Español, Inglés, Francés. 10 años de experiencia. Guía paseos en catamarán y procura que cada recorrido sea cómodo y seguro para todos.", imagen: "/images/guias/mariana-lopez.png", instagram: "mariana.lopez.cr" },
+    { correo: "carlos.jimenez@tuanistrip.com", codigo: "GUIA-004", especialidad: "Montaña", descripcion: "Especialista en Senderismo. Idiomas: Español, Inglés. 9 años de experiencia. Biólogo de formación, hace énfasis en flora y fauna durante las caminatas por bosque nuboso y volcanes.", imagen: "/images/guias/carlos-jimenez.png", instagram: "carlos.jimenez.tours" },
+    { correo: "andrea.solano@tuanistrip.com", codigo: "GUIA-005", especialidad: "Montaña", descripcion: "Especialista en Canopy. Idiomas: Español, Francés. 7 años de experiencia. Instructora certificada en rappel y tirolesa, prioriza la seguridad sin quitarle la adrenalina al recorrido.", imagen: "/images/guias/andrea-solano.png", instagram: "andrea.solano.canopy" },
+    { correo: "luis.mora@tuanistrip.com", codigo: "GUIA-006", especialidad: "Montaña", descripcion: "Especialista en Montar a caballo. Idiomas: Español, Inglés, Portugués. 12 años de experiencia. Cuenta con amplia experiencia guiando cabalgatas por diferentes rutas y paisajes naturales.", imagen: "/images/guias/luis-mora.png", instagram: "luis.mora.guanacaste" },
+    { correo: "valeria.castro@tuanistrip.com", codigo: "GUIA-007", especialidad: "Ciudad", descripcion: "Especialista en City Tour. Idiomas: Español, Inglés. 5 años de experiencia. Historiadora local, conecta cada parada del recorrido urbano con anécdotas reales de la San José de antes.", imagen: "/images/guias/valeria-castro.png", instagram: "valeria.castro.cr" },
+    { correo: "pablo.herrera@tuanistrip.com", codigo: "GUIA-008", especialidad: "Ciudad", descripcion: "Especialista en Tour Gastronómico. Idiomas: Español, Francés. 11 años de experiencia. Ex chef de restaurante, selecciona personalmente cada parada del tour según la temporada de ingredientes.", imagen: "/images/guias/pablo-herrera.png", instagram: "pablo.herrera.gastro" },
+    { correo: "fernanda.ruiz@tuanistrip.com", codigo: "GUIA-009", especialidad: "Ciudad", descripcion: "Especialista en Tour Histórico y Cultural. Idiomas: Español, Inglés, Portugués. 8 años de experiencia. Egresada de Patrimonio Cultural, profundiza en los museos y barrios históricos menos visitados por turistas.", imagen: "/images/guias/fernanda-ruiz.png", instagram: "fernanda.ruiz.tours" },
 ];
 
 async function apiFetch(path, { method = "GET", body, token } = {}) {
@@ -215,7 +215,7 @@ async function main() {
                 precioBase: tour.precioBase,
                 duracionMinutos: tour.duracionMinutos,
                 especialidadId: especialidadPorNombre[tour.especialidad],
-                imagen: null, // el bypass de imagen se resuelve aparte (ver imagenes-seed.json)
+                imagen: null,
             },
         });
 
@@ -227,6 +227,7 @@ async function main() {
 
     // 5. Crear los 9 guías, asignando TODOS los tours de su especialidad
     const imagenesGuias = {};
+    const instagramGuias = {};
 
     for (const guia of GUIAS) {
         const usuario = usuarioPorCorreo[guia.correo];
@@ -247,14 +248,15 @@ async function main() {
 
         const id = creado.data.id;
         imagenesGuias[id] = guia.imagen;
+        instagramGuias[id] = guia.instagram;
         console.log(`Guía creado: ${usuario.nombre} ${usuario.primerApellido} (id ${id})`);
     }
 
-    // 6. Escribir el archivo semilla de imágenes para el FrontEnd
+    // 6. Escribir el archivo semilla de imágenes + redes sociales para el FrontEnd
     await mkdir("./public/data", { recursive: true });
     await writeFile(
         "./public/data/imagenes-seed.json",
-        JSON.stringify({ tours: imagenesTours, guias: imagenesGuias }, null, 2)
+        JSON.stringify({ tours: imagenesTours, guias: imagenesGuias, instagramGuias }, null, 2)
     );
     console.log("Archivo public/data/imagenes-seed.json generado.");
 

@@ -44,13 +44,36 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  asChild = false,
+  children,
   ...props
 }) {
+  // Base UI no tiene "asChild" (eso es de Radix) — su equivalente es la
+  // prop "render", que recibe el elemento ya armado (ej. <Link/>) y le
+  // fusiona el className/estilos del botón encima. Traducimos aquí para
+  // no tener que reescribir cada <Button asChild><Link/></Button> del
+  // proyecto a la sintaxis nueva.
+  if (asChild) {
+    return (
+      <ButtonPrimitive
+        data-slot="button"
+        className={cn(buttonVariants({ variant, size, className }))}
+        render={children}
+        // El elemento que renderizamos (ej. <Link>) no es un <button>
+        // nativo — le avisamos a Base UI para que no asuma esa semántica.
+        nativeButton={false}
+        {...props}
+      />
+    );
+  }
+
   return (
     <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
-      {...props} />
+      {...props}>
+      {children}
+    </ButtonPrimitive>
   );
 }
 

@@ -6,7 +6,12 @@ import { apiClient } from "@/lib/api-client";
 
 export const empleadosService = {
     listar: () => apiClient.get("/empleados"),
-    listarActivos: () => apiClient.get("/empleados/activos"),
+    // servicioId es opcional: si se pasa, el API filtra solo los guías
+    // activos que además tienen ESE tour asignado — se usa en el
+    // formulario de reservas para no dejar elegir un guía que no puede
+    // atender el tour seleccionado.
+    listarActivos: (servicioId) =>
+        apiClient.get(servicioId ? `/empleados/activos?servicioId=${servicioId}` : "/empleados/activos"),
     obtenerPorId: (id) => apiClient.get(`/empleados/${id}`),
 
     // Agenda de un guía para una fecha específica: horario del establecimiento,
