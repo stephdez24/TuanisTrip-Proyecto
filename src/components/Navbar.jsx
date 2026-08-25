@@ -22,6 +22,7 @@ const NAV_POR_ROL = {
         { to: "/guias", label: "Guías" },
         { to: "/horarios", label: "Horarios" },
         { to: "/favoritos", label: "Favoritos" },
+        { to: "/carrito", label: "Mi selección" },
         { to: "/reservas", label: "Mis reservas" },
     ],
     Empleado: [
@@ -30,6 +31,7 @@ const NAV_POR_ROL = {
         { to: "/guias", label: "Guías" },
         { to: "/horarios", label: "Horarios" },
         { to: "/reservas", label: "Reservas" },
+        { to: "/solicitudes", label: "Solicitudes" },
         { to: "/mi-agenda", label: "Mi agenda" },
         { to: "/restricciones", label: "Bloqueos y temporadas" },
     ],
@@ -40,6 +42,7 @@ const NAV_POR_ROL = {
         { to: "/guias", label: "Guías" },
         { to: "/horarios", label: "Horarios" },
         { to: "/reservas", label: "Reservas" },
+        { to: "/solicitudes", label: "Solicitudes" },
         { to: "/restricciones", label: "Bloqueos y temporadas" },
         { to: "/agenda", label: "Agenda del día" },
     ],

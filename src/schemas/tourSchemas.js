@@ -36,11 +36,15 @@ export const tourSchema = z.object({
         .int()
         .positive("Selecciona una categoría"),
 
-    // BYPASS TEMPORAL: este campo NO existe en el DTO del API (que solo
-    // acepta un nombre de archivo ya subido, no una URL). Se separa del
-    // resto de "valores" antes de mandar el POST/PUT — ver TourFormPage.jsx
-    // y lib/imagenLocal.js para el porqué completo.
-    imagenUrl: z
-        .union([z.url("Debe ser una URL válida"), z.literal("")])
-        .optional(),
+    // Ya NO es un bypass: es el nombre real del archivo que devuelve
+    // POST /images/upload (ver imagenesService.js). El DTO del backend
+    // permite null, pero el enunciado exige imagen obligatoria — por eso
+    // el FrontEnd sí la exige aunque el backend sea más permisivo.
+    imagen: z
+        .string({ message: "Debes subir una imagen para el tour" })
+        .min(1, "Debes subir una imagen para el tour")
+        .regex(
+            /^[a-zA-Z0-9._-]+\.(jpg|jpeg|png|webp)$/i,
+            "El nombre de la imagen debe corresponder a un archivo JPG, PNG o WEBP"
+        ),
 })

@@ -4,23 +4,26 @@ import {
     Users,
     ArrowRight,
     CalendarCheck,
-    CreditCard,
+    Wallet,
     Headphones,
 } from "lucide-react"
 
 import { useFetch } from "@/lib/useFetch"
 import { serviciosService } from "@/services/serviciosService"
 import { empleadosService } from "@/services/empleadosService"
-import { getImagenLocal, getImagenLocalGuia } from "@/lib/imagenLocal"
+import { imagenesService } from "@/services/imagenesService"
+import { getImagenLocalGuia } from "@/lib/imagenLocal"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
-// Imagen de respaldo si un tour todavía no tiene imagen local
+// Imagen de respaldo si un tour todavía no tiene imagen subida
 const IMAGEN_TOUR_POR_DEFECTO =
     "https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=600&auto=format&fit=crop"
 
+// Los guías siguen sin campo de imagen real en el API (el modelo Empleado
+// no lo tiene, a diferencia de Servicio) — bypass legítimo, no un hueco.
 const IMAGEN_GUIA_POR_DEFECTO =
     "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&auto=format&fit=crop"
 
@@ -84,10 +87,10 @@ export default function HomePage() {
 
             <section
                 className="
-                    relative flex min-h-[620px] items-end overflow-hidden
+                    relative flex min-h-155 items-end overflow-hidden
                     bg-cover bg-center
                     text-white
-                    sm:min-h-[680px]
+                    sm:min-h-170
                 "
                 style={{
                     backgroundImage:
@@ -100,7 +103,7 @@ export default function HomePage() {
                 <div
                     className="
                         absolute inset-0
-                        bg-gradient-to-t
+                        bg-linear-to-t
                         from-black/80
                         via-black/35
                         to-black/10
@@ -205,7 +208,7 @@ export default function HomePage() {
                 <div
                     className="
                         absolute bottom-0 left-0 right-0 h-24
-                        bg-gradient-to-t from-background
+                        bg-linear-to-t from-background
                         to-transparent
                     "
                 />
@@ -375,7 +378,7 @@ export default function HomePage() {
                                             "
                                             style={{
                                                 backgroundImage: `url('${
-                                                    getImagenLocal(tour.id) ??
+                                                    imagenesService.urlDescarga(tour.imagen) ??
                                                     IMAGEN_TOUR_POR_DEFECTO
                                                 }')`,
                                             }}
@@ -385,7 +388,7 @@ export default function HomePage() {
                                             className="
                                                 absolute inset-x-0
                                                 bottom-0 h-20
-                                                bg-gradient-to-t
+                                                bg-linear-to-t
                                                 from-black/40
                                                 to-transparent
                                             "
@@ -603,7 +606,7 @@ export default function HomePage() {
                                             className="
                                                 absolute inset-x-0
                                                 bottom-0 h-24
-                                                bg-gradient-to-t
+                                                bg-linear-to-t
                                                 from-black/45
                                                 to-transparent
                                             "
@@ -929,7 +932,10 @@ export default function HomePage() {
                                 </div>
 
 
-                                {/* Pago seguro */}
+                                {/* Precios claros — reemplaza "Pago seguro":
+                                    el sistema no procesa pagos reales (no hay
+                                    ningún flujo de cobro en el API), así que
+                                    "pago seguro" prometía algo que no existe. */}
 
                                 <div
                                     className="
@@ -946,7 +952,7 @@ export default function HomePage() {
                                             text-primary
                                         "
                                     >
-                                        <CreditCard
+                                        <Wallet
                                             className="h-5 w-5"
                                         />
                                     </div>
@@ -959,7 +965,7 @@ export default function HomePage() {
                                                 text-primary
                                             "
                                         >
-                                            Pago seguro
+                                            Precios claros
                                         </p>
 
                                         <p
@@ -968,7 +974,7 @@ export default function HomePage() {
                                                 text-secondary-foreground/80
                                             "
                                         >
-                                            y protegido
+                                            sin sorpresas
                                         </p>
 
                                     </div>

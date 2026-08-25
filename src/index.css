@@ -404,6 +404,21 @@
     background-color: var(--background);
     color: var(--foreground);
   }
+
+  /* MOVIDO AQUÍ A PROPÓSITO (antes vivía suelta, fuera de cualquier
+     @layer): en Tailwind v4, cualquier regla CSS que quede fuera de un
+     "cascade layer" le gana a TODAS las utilidades de Tailwind (como
+     text-primary-foreground) sin importar la especificidad — es una
+     regla del estándar de CSS Cascade Layers, no de Tailwind en sí.
+     Como esta regla apuntaba a <a>, cada botón renderizado como Link
+     (<Button asChild><Link/></Button>) perdía su color de texto real y
+     heredaba el del contenedor padre — por eso hacía falta forzar
+     !text-white como parche en varios lugares. Con la regla adentro de
+     @layer base, vuelve a competir en igualdad de condiciones y la
+     especificidad normal de CSS decide (la clase gana, como debe ser). */
+  a {
+    color: inherit;
+  }
 }
 
 
@@ -413,11 +428,6 @@
 
 img {
   max-width: 100%;
-}
-
-
-a {
-  color: inherit;
 }
 
 

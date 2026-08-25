@@ -9,7 +9,7 @@ import { citasService } from "@/services/citasService"
 import { estadosCitaService } from "@/services/estadosCitaService"
 import { clasesEstadoColor } from "@/lib/estadoColor"
 import { formatearFechaLarga } from "@/lib/fecha"
-import { getImagenLocal } from "@/lib/imagenLocal"
+import { imagenesService } from "@/services/imagenesService"
 
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -123,7 +123,7 @@ export default function ReservaDetailPage() {
                     verdad se va a hacer, no solo un banner genérico. */}
                 <div className="relative">
                     <img
-                        src={getImagenLocal(cita.servicio?.id) || IMAGEN_POR_DEFECTO}
+                        src={imagenesService.urlDescarga(cita.servicio?.imagen) || IMAGEN_POR_DEFECTO}
                         alt={cita.servicio?.nombre}
                         className="h-56 w-full object-cover"
                     />

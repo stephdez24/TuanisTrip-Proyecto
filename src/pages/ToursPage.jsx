@@ -7,11 +7,12 @@ import { useAuth } from "@/auth/useAuth"
 import { useFetch } from "@/lib/useFetch"
 import { useOrdenamiento } from "@/lib/useOrdenamiento"
 import { serviciosService } from "@/services/serviciosService"
-import { getImagenLocal } from "@/lib/imagenLocal"
+import { imagenesService } from "@/services/imagenesService"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import SelectorOrden from "@/components/SelectorOrden"
+import BotonFavorito from "@/components/BotonFavorito"
 import {
     Card,
     CardContent,
@@ -37,6 +38,7 @@ const OPCIONES_ORDEN = [
 export default function ToursPage() {
     const { rol } = useAuth()
     const esAdmin = rol === "Administrador"
+    const esCliente = rol === "Cliente"
 
     // Mismo truco que en ExtrasPage: cambiar este número fuerza a useFetch
     // a volver a pedir la lista después de activar/desactivar un tour.
@@ -404,7 +406,7 @@ export default function ToursPage() {
 
                                         <img
                                             src={
-                                                getImagenLocal(tour.id) ||
+                                                imagenesService.urlDescarga(tour.imagen) ||
                                                 IMAGEN_POR_DEFECTO
                                             }
                                             alt={tour.nombre}
@@ -473,6 +475,28 @@ export default function ToursPage() {
                                             </Badge>
 
                                         </div>
+
+                                        {/* Corazón de favoritos: solo tiene sentido
+                                            para el Cliente (es quien arma su
+                                            selección de viaje) — abajo a la
+                                            derecha, para no chocar con las
+                                            insignias de arriba. */}
+
+                                        {esCliente && (
+                                            <BotonFavorito
+                                                tipo="servicio"
+                                                id={tour.id}
+                                                className="
+                                                    absolute bottom-2 right-2
+                                                    flex h-8 w-8 items-center
+                                                    justify-center rounded-full
+                                                    bg-white/90 text-destructive
+                                                    shadow-sm backdrop-blur-sm
+                                                    transition-transform
+                                                    hover:scale-110
+                                                "
+                                            />
+                                        )}
 
                                     </div>
 

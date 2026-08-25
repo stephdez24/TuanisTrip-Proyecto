@@ -18,6 +18,7 @@ const ENLACES_FOOTER_POR_ROL = {
         { to: "/guias", label: "Guías" },
         { to: "/horarios", label: "Horarios" },
         { to: "/favoritos", label: "Favoritos" },
+        { to: "/carrito", label: "Mi selección" },
         { to: "/reservas", label: "Mis reservas" },
     ],
 

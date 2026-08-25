@@ -28,6 +28,9 @@ import RestriccionesPage from "@/pages/RestriccionesPage"
 import RestriccionDetailPage from "@/pages/RestriccionDetailPage"
 import MiAgendaPage from "@/pages/MiAgendaPage"
 import AgendaDiariaPage from "@/pages/AgendaDiariaPage"
+import FavoritosPage from "@/pages/FavoritosPage"
+import CarritoPage from "@/pages/CarritoPage"
+import SolicitudesPage from "@/pages/SolicitudesPage"
 import UnauthorizedPage from "@/pages/UnauthorizedPage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
@@ -96,6 +99,7 @@ function App() {
                             <Route path="/reservas/:id/editar" element={<ReservaFormPage />} />
                             <Route path="/restricciones" element={<RestriccionesPage />} />
                             <Route path="/restricciones/:id" element={<RestriccionDetailPage />} />
+                            <Route path="/solicitudes" element={<SolicitudesPage />} />
                         </Route>
 
                         {/* ---------- Solo Empleado ----------
@@ -104,6 +108,14 @@ function App() {
                             su propio día sin pasar por el flujo de crear reserva. */}
                         <Route element={<RoleRoute roles={["Empleado"]} />}>
                             <Route path="/mi-agenda" element={<MiAgendaPage />} />
+                        </Route>
+
+                        {/* ---------- Solo Cliente ----------
+                            Favoritos y Carrito son capa de UX pensada para el
+                            turista armando su viaje — no aplican a Admin/Empleado. */}
+                        <Route element={<RoleRoute roles={["Cliente"]} />}>
+                            <Route path="/favoritos" element={<FavoritosPage />} />
+                            <Route path="/carrito" element={<CarritoPage />} />
                         </Route>
 
                         {/*

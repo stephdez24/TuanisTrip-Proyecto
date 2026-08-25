@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import SelectorOrden from "@/components/SelectorOrden"
+import BotonFavorito from "@/components/BotonFavorito"
 
 import {
     Card,
@@ -70,6 +71,7 @@ export default function GuiasPage() {
     const { rol } = useAuth()
 
     const esAdmin = rol === "Administrador"
+    const esCliente = rol === "Cliente"
 
     const [refrescarClave, setRefrescarClave] = useState(0)
 
@@ -766,6 +768,33 @@ export default function GuiasPage() {
                                                     </Badge>
 
                                                 </div>
+
+                                                {/* Corazón de favoritos: solo
+                                                    para Cliente, abajo a la
+                                                    derecha para no chocar con
+                                                    las insignias de arriba. */}
+
+                                                {esCliente && (
+                                                    <BotonFavorito
+                                                        tipo="empleado"
+                                                        id={guia.id}
+                                                        className="
+                                                            absolute
+                                                            bottom-3
+                                                            right-3
+                                                            flex h-8 w-8
+                                                            items-center
+                                                            justify-center
+                                                            rounded-full
+                                                            bg-white/90
+                                                            text-destructive
+                                                            shadow-sm
+                                                            backdrop-blur-sm
+                                                            transition-transform
+                                                            hover:scale-110
+                                                        "
+                                                    />
+                                                )}
 
                                             </div>
 

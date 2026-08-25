@@ -3,12 +3,13 @@ import { useNavigate, useParams } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
+import { ImagePlus, Loader2 } from "lucide-react"
 
 import { tourSchema } from "@/schemas/tourSchemas"
 import { serviciosService } from "@/services/serviciosService"
 import { especialidadesService } from "@/services/especialidadesService"
+import { imagenesService } from "@/services/imagenesService"
 import { useFetch } from "@/lib/useFetch"
-import { getImagenLocal, setImagenLocal } from "@/lib/imagenLocal"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,6 +31,9 @@ import {
 } from "@/components/ui/form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
+const TIPOS_VALIDOS = ["image/jpeg", "image/png", "image/webp"]
+const TAMANO_MAXIMO = 2 * 1024 * 1024 // 2 MB, igual al límite real del backend
+
 // Un solo componente para crear y editar tours: el modo se decide con la
 // presencia de :id en la URL (mismo patrón que ExtraFormPage.jsx).
 export default function TourFormPage() {
@@ -38,6 +42,12 @@ export default function TourFormPage() {
     const navigate = useNavigate()
     const [enviando, setEnviando] = useState(false)
     const [cargandoTour, setCargandoTour] = useState(esEdicion)
+
+    // Vista previa de la imagen — separada del valor real del formulario
+    // (que solo guarda el NOMBRE del archivo, no la URL) para poder
+    // mostrar algo de inmediato al elegir un archivo nuevo.
+    const [previewUrl, setPreviewUrl] = useState(null)
+    const [subiendoImagen, setSubiendoImagen] = useState(false)
 
     // Alimenta el <Select> de categoría. Se pide siempre (tanto en crear
     // como en editar), por eso está fuera del if de modo edición.
@@ -54,7 +64,7 @@ export default function TourFormPage() {
             precioBase: "",
             duracionMinutos: "",
             especialidadId: "",
-            imagenUrl: "",
+            imagen: "",
         },
     })
 
@@ -74,10 +84,11 @@ export default function TourFormPage() {
                     precioBase: tour.precioBase,
                     duracionMinutos: tour.duracionMinutos,
                     especialidadId: tour.especialidadId,
-                    // La imagen real del tour vive en localStorage, no en la
-                    // respuesta del API (ver lib/imagenLocal.js).
-                    imagenUrl: getImagenLocal(tour.id) ?? "",
+                    imagen: tour.imagen ?? "",
                 })
+                // tour.imagen ya viene del API real — se arma la URL de
+                // descarga directa para mostrar la foto actual.
+                setPreviewUrl(imagenesService.urlDescarga(tour.imagen))
             })
             .catch((err) => {
                 toast.error(err.message || "No se pudo cargar el tour")
@@ -87,30 +98,55 @@ export default function TourFormPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, esEdicion])
 
-    async function onSubmit(valores) {
-        // Separamos imagenUrl del resto: NO se manda al API (rompería la
-        // validación del campo "imagen", que espera un nombre de archivo).
-        const { imagenUrl, ...datosTour } = valores
-        setEnviando(true)
+    // Se sube la imagen EN CUANTO se elige el archivo (no se espera al
+    // envío del formulario) — así el usuario ve de inmediato si falló por
+    // formato/tamaño, sin perder el resto de los datos ya llenados.
+    async function handleArchivoChange(e) {
+        const archivo = e.target.files?.[0]
+        if (!archivo) return
 
+        // Validación proactiva en el FrontEnd — mismo criterio que el resto
+        // del proyecto: no depender solo del error que devuelva el backend.
+        if (!TIPOS_VALIDOS.includes(archivo.type)) {
+            toast.error("Solo se permiten imágenes JPG, PNG o WEBP")
+            e.target.value = ""
+            return
+        }
+        if (archivo.size > TAMANO_MAXIMO) {
+            toast.error("La imagen no debe superar los 2 MB")
+            e.target.value = ""
+            return
+        }
+
+        setPreviewUrl(URL.createObjectURL(archivo))
+        setSubiendoImagen(true)
         try {
-            let tourId = id
+            // Si ya había una imagen (edición o reintento), se manda como
+            // previousFileName para que el backend la borre al reemplazarla
+            // y no queden archivos huérfanos en el servidor.
+            const nombreAnterior = form.getValues("imagen") || undefined
+            const fileName = await imagenesService.subir(archivo, nombreAnterior)
+            form.setValue("imagen", fileName, { shouldValidate: true })
+            toast.success("Imagen subida correctamente")
+        } catch (err) {
+            toast.error(err.message || "No se pudo subir la imagen")
+        } finally {
+            setSubiendoImagen(false)
+        }
+    }
 
+    async function onSubmit(valores) {
+        // Ya no hay que separar nada: "imagen" es un campo real del API
+        // (el nombre del archivo ya subido), se manda tal cual con el resto.
+        setEnviando(true)
+        try {
             if (esEdicion) {
-                await serviciosService.actualizar(id, datosTour)
+                await serviciosService.actualizar(id, valores)
                 toast.success("Tour actualizado correctamente")
             } else {
-                const response = await serviciosService.crear(datosTour)
-                // En modo creación todavía no teníamos el id (lo genera el
-                // backend), lo sacamos de la respuesta para poder guardar la
-                // imagen asociada a ESE tour específico.
-                tourId = response.data.id
+                await serviciosService.crear(valores)
                 toast.success("Tour creado correctamente")
             }
-
-            // Bypass temporal de imagen: se guarda aparte, del lado del cliente.
-            setImagenLocal(tourId, imagenUrl || null)
-
             navigate("/tours")
         } catch (err) {
             toast.error(err.message || "No se pudo guardar el tour")
@@ -192,8 +228,8 @@ export default function TourFormPage() {
                                                             !value
                                                                 ? "Selecciona una categoría"
                                                                 : especialidades?.find(
-                                                                      (e) => String(e.id) === value
-                                                                  )?.nombre
+                                                                    (e) => String(e.id) === value
+                                                                )?.nombre
                                                         }
                                                     </SelectValue>
                                                 </SelectTrigger>
@@ -244,20 +280,50 @@ export default function TourFormPage() {
                                 />
                             </div>
 
+                            {/* Imagen real: selección de archivo + vista previa,
+                                subida de inmediato al endpoint real del API. */}
                             <FormField
                                 control={form.control}
-                                name="imagenUrl"
-                                render={({ field }) => (
+                                name="imagen"
+                                render={() => (
                                     <FormItem>
-                                        {/* "(temporal)" a propósito en la etiqueta: recordatorio
-                                            visual de que este campo es un bypass, no el flujo real. */}
-                                        <FormLabel>URL de imagen (temporal)</FormLabel>
+                                        <FormLabel>Imagen del tour</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                type="url"
-                                                placeholder="https://ejemplo.com/foto.jpg"
-                                                {...field}
-                                            />
+                                            <div className="space-y-3">
+                                                {previewUrl && (
+                                                    <img
+                                                        src={previewUrl}
+                                                        alt="Vista previa"
+                                                        className="h-40 w-full rounded-lg border object-cover"
+                                                    />
+                                                )}
+                                                <label
+                                                    className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed p-4 text-sm text-muted-foreground transition-colors hover:bg-secondary/50 ${
+                                                        subiendoImagen ? "pointer-events-none opacity-60" : ""
+                                                    }`}
+                                                >
+                                                    {subiendoImagen ? (
+                                                        <>
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                            Subiendo imagen...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <ImagePlus className="h-4 w-4" />
+                                                            {previewUrl
+                                                                ? "Cambiar imagen"
+                                                                : "Seleccionar imagen (JPG, PNG o WEBP, máx. 2MB)"}
+                                                        </>
+                                                    )}
+                                                    <input
+                                                        type="file"
+                                                        accept="image/jpeg,image/png,image/webp"
+                                                        className="hidden"
+                                                        onChange={handleArchivoChange}
+                                                        disabled={subiendoImagen}
+                                                    />
+                                                </label>
+                                            </div>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -265,7 +331,11 @@ export default function TourFormPage() {
                             />
 
                             <div className="flex gap-3 pt-2">
-                                <Button type="submit" disabled={enviando} className="flex-1">
+                                <Button
+                                    type="submit"
+                                    disabled={enviando || subiendoImagen}
+                                    className="flex-1"
+                                >
                                     {enviando
                                         ? "Guardando..."
                                         : esEdicion

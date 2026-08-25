@@ -1,46 +1,48 @@
 // src/services/serviciosService.js
 //
 // CRUD completo del recurso /servicios (Tours, en la temática de Tuanis Trip).
+
 import { apiClient } from "@/lib/api-client";
 
 export const serviciosService = {
-  // Todos los tours (activos e inactivos) — para el mantenimiento del Admin.
+
+    // Todos los tours (activos e inactivos)
+    // para el mantenimiento del Admin.
     listar: () => apiClient.get("/servicios"),
 
-  // Solo los activos — para pantallas donde el usuario elige un tour para
-  // reservar (no debe poder seleccionar uno desactivado).
+    // Solo los activos
+    // para pantallas donde el usuario elige un tour para reservar.
     listarActivos: () => apiClient.get("/servicios/activos"),
 
-    obtenerPorId: (id) => apiClient.get(`/servicios/${id}`),
+    // Obtener un tour por ID.
+    obtenerPorId: (id) =>
+        apiClient.get(`/servicios/${id}`),
 
-  // "imagen" siempre viaja null: el API no tiene un endpoint de subida
-  // conectado todavía (ver referencia técnica del API). La URL que la
-  // persona pega en el formulario se guarda aparte, en localStorage
-  // (lib/imagenLocal.js) — este servicio NUNCA la manda al backend, porque
-  // el DTO la rechazaría (espera un nombre de archivo, no una URL).
+    // Crear un nuevo tour.
     crear: (data) =>
         apiClient.post("/servicios", {
-        nombre: data.nombre,
-        descripcion: data.descripcion,
-        precioBase: data.precioBase,
-        duracionMinutos: data.duracionMinutos,
-        especialidadId: data.especialidadId,
-        imagen: null,
-    }),
+            nombre: data.nombre,
+            descripcion: data.descripcion,
+            precioBase: data.precioBase,
+            duracionMinutos: data.duracionMinutos,
+            especialidadId: data.especialidadId,
+            imagen: data.imagen,
+        }),
 
-  // PUT reemplaza el servicio completo, por eso mandamos todos los campos
-  // aunque la persona no haya tocado alguno.
+    // Actualizar un tour existente.
     actualizar: (id, data) =>
         apiClient.put(`/servicios/${id}`, {
-        nombre: data.nombre,
-        descripcion: data.descripcion,
-        precioBase: data.precioBase,
-        duracionMinutos: data.duracionMinutos,
-        especialidadId: data.especialidadId,
-        imagen: null,
-    }),
+            nombre: data.nombre,
+            descripcion: data.descripcion,
+            precioBase: data.precioBase,
+            duracionMinutos: data.duracionMinutos,
+            especialidadId: data.especialidadId,
+            imagen: data.imagen,
+        }),
 
-  // El backend rechaza esto con 409 si el tour tiene citas pendientes o
-  // confirmadas — ese error se propaga tal cual vía ApiError.message.
-    cambiarEstado: (id, activo) => apiClient.patch(`/servicios/${id}/estado`, { activo }),
+    // Cambiar estado activo/inactivo.
+    cambiarEstado: (id, activo) =>
+        apiClient.patch(`/servicios/${id}/estado`, {
+            activo,
+        }),
 };
