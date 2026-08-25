@@ -47,16 +47,36 @@ export default function ReservaFormPage() {
 
     const [enviando, setEnviando] = useState(false)
     const [cargandoCita, setCargandoCita] = useState(esEdicion)
+
     // null = todavía no se ha consultado; { disponible, motivo } = resultado real
     const [disponibilidad, setDisponibilidad] = useState(null)
     const [consultandoDisponibilidad, setConsultandoDisponibilidad] = useState(false)
 
     // ---- Catálogos ----
-    const { data: clientes } = useFetch(() => usuariosService.listar("Cliente"), [])
-    const { data: tours } = useFetch(() => serviciosService.listarActivos(), [])
-    const { data: extras } = useFetch(() => extrasService.listarActivos(), [])
-    const { data: estados } = useFetch(() => estadosCitaService.listar(), [])
-    const { data: horarios } = useFetch(() => horariosService.listar(), [])
+    const { data: clientes } = useFetch(
+        () => usuariosService.listar("Cliente"),
+        []
+    )
+
+    const { data: tours } = useFetch(
+        () => serviciosService.listarActivos(),
+        []
+    )
+
+    const { data: extras } = useFetch(
+        () => extrasService.listarActivos(),
+        []
+    )
+
+    const { data: estados } = useFetch(
+        () => estadosCitaService.listar(),
+        []
+    )
+
+    const { data: horarios } = useFetch(
+        () => horariosService.listar(),
+        []
+    )
 
     // Cuando el rol es Empleado, un guía solo debería reservarse tours a sí
     // mismo (el enunciado no lo prohíbe explícitamente para "Crear", pero
@@ -74,13 +94,21 @@ export default function ReservaFormPage() {
     // asignados al propio guía cuando el rol es Empleado.
     const toursDisponibles = useMemo(() => {
         if (!esEmpleado) return tours ?? []
+
         if (!propioEmpleado) return []
-        const idsPropios = new Set(propioEmpleado.servicios?.map((s) => s.id))
-        return (tours ?? []).filter((t) => idsPropios.has(t.id))
+
+        const idsPropios = new Set(
+            propioEmpleado.servicios?.map((s) => s.id)
+        )
+
+        return (tours ?? []).filter((t) =>
+            idsPropios.has(t.id)
+        )
     }, [tours, esEmpleado, propioEmpleado])
 
     const form = useForm({
         resolver: zodResolver(reservaSchema),
+
         defaultValues: {
             clienteId: "",
             servicioId: "",
@@ -97,16 +125,38 @@ export default function ReservaFormPage() {
         },
     })
 
-    const servicioId = useWatch({ control: form.control, name: "servicioId" })
-    const empleadoId = useWatch({ control: form.control, name: "empleadoId" })
-    const fecha = useWatch({ control: form.control, name: "fecha" })
-    const horaInicio = useWatch({ control: form.control, name: "horaInicio" })
-    const adicionalIds = useWatch({ control: form.control, name: "adicionalIds" })
+    const servicioId = useWatch({
+        control: form.control,
+        name: "servicioId",
+    })
+
+    const empleadoId = useWatch({
+        control: form.control,
+        name: "empleadoId",
+    })
+
+    const fecha = useWatch({
+        control: form.control,
+        name: "fecha",
+    })
+
+    const horaInicio = useWatch({
+        control: form.control,
+        name: "horaInicio",
+    })
+
+    const adicionalIds = useWatch({
+        control: form.control,
+        name: "adicionalIds",
+    })
 
     // Guías filtrados: solo los que SÍ pueden atender el tour seleccionado
     // (el API mismo hace este filtro con ?servicioId=, no lo hacemos a mano).
     // No se usa cuando el rol es Empleado (el guía ya está fijo en sí mismo).
-    const { data: empleadosDisponibles, loading: cargandoEmpleados } = useFetch(
+    const {
+        data: empleadosDisponibles,
+        loading: cargandoEmpleados,
+    } = useFetch(
         () =>
             !esEmpleado && servicioId
                 ? empleadosService.listarActivos(servicioId)
@@ -120,8 +170,12 @@ export default function ReservaFormPage() {
     // atender, así que su propio id siempre sigue siendo válido.
     useEffect(() => {
         if (esEmpleado && propioEmpleadoId) {
-            form.setValue("empleadoId", String(propioEmpleadoId))
+            form.setValue(
+                "empleadoId",
+                String(propioEmpleadoId)
+            )
         }
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [esEmpleado, propioEmpleadoId])
 
@@ -133,36 +187,63 @@ export default function ReservaFormPage() {
             .obtenerPorId(id)
             .then((response) => {
                 const cita = response.data
+
                 form.reset({
                     clienteId: cita.clienteId,
                     servicioId: cita.servicioId,
                     empleadoId: cita.empleadoId,
                     fecha: cita.fecha.slice(0, 10),
                     horaInicio: cita.horaInicio,
-                    adicionalIds: cita.adicionales?.map((a) => a.id) ?? [],
-                    observaciones: cita.observaciones ?? "",
-                    duracionMinutos: cita.duracionMinutos,
+                    adicionalIds:
+                        cita.adicionales?.map(
+                            (a) => a.id
+                        ) ?? [],
+                    observaciones:
+                        cita.observaciones ?? "",
+                    duracionMinutos:
+                        cita.duracionMinutos,
                     horaFin: cita.horaFin,
-                    precioServicio: cita.precioServicio,
-                    costoAdicionales: cita.costoAdicionales,
-                    costoTotal: cita.costoTotal,
+                    precioServicio:
+                        cita.precioServicio,
+                    costoAdicionales:
+                        cita.costoAdicionales,
+                    costoTotal:
+                        cita.costoTotal,
                 })
             })
             .catch((err) => {
-                toast.error(err.message || "No se pudo cargar la reserva")
+                toast.error(
+                    err.message ||
+                    "No se pudo cargar la reserva"
+                )
+
                 navigate("/reservas")
             })
-            .finally(() => setCargandoCita(false))
+            .finally(() =>
+                setCargandoCita(false)
+            )
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, esEdicion])
 
     // --- Recalcular precio/duración cuando cambia el tour ---
     useEffect(() => {
-        const tour = tours?.find((t) => t.id === Number(servicioId))
+        const tour = tours?.find(
+            (t) => t.id === Number(servicioId)
+        )
+
         if (!tour) return
 
-        form.setValue("precioServicio", tour.precioBase)
-        form.setValue("duracionMinutos", tour.duracionMinutos)
+        form.setValue(
+            "precioServicio",
+            tour.precioBase
+        )
+
+        form.setValue(
+            "duracionMinutos",
+            tour.duracionMinutos
+        )
+
         // Si el que estaba elegido ya no puede atender el nuevo tour, lo
         // limpiamos para forzar a elegir uno válido — pero NO cuando el rol
         // es Empleado, porque su propio id siempre sigue siendo válido
@@ -170,37 +251,438 @@ export default function ReservaFormPage() {
         if (!esEmpleado) {
             form.setValue("empleadoId", "")
         }
+
+        // Al cambiar de tour, la hora anterior puede dejar de ser válida.
+        form.setValue("horaInicio", "")
+        form.setValue("horaFin", "")
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [servicioId, tours, esEmpleado])
 
     // --- Recalcular costo de extras cuando cambia la selección ---
     useEffect(() => {
-        const total = (adicionalIds ?? []).reduce((suma, extraId) => {
-            const extra = extras?.find((e) => e.id === extraId)
-            return suma + (extra ? Number(extra.precio) : 0)
-        }, 0)
-        form.setValue("costoAdicionales", total)
+        const total = (
+            adicionalIds ?? []
+        ).reduce(
+            (suma, extraId) => {
+                const extra = extras?.find(
+                    (e) => e.id === extraId
+                )
+
+                return suma +
+                    (
+                        extra
+                            ? Number(extra.precio)
+                            : 0
+                    )
+            },
+            0
+        )
+
+        form.setValue(
+            "costoAdicionales",
+            total
+        )
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [adicionalIds, extras])
 
     // --- Recalcular hora de fin cuando cambia hora de inicio o duración ---
-    const duracionMinutos = useWatch({ control: form.control, name: "duracionMinutos" })
+    const duracionMinutos = useWatch({
+        control: form.control,
+        name: "duracionMinutos",
+    })
+
     useEffect(() => {
-        if (!horaInicio || !duracionMinutos) return
-        form.setValue("horaFin", sumarMinutos(horaInicio, duracionMinutos))
+        if (!horaInicio || !duracionMinutos) {
+            form.setValue("horaFin", "")
+            return
+        }
+
+        form.setValue(
+            "horaFin",
+            sumarMinutos(
+                horaInicio,
+                duracionMinutos
+            )
+        )
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [horaInicio, duracionMinutos])
 
     // --- Costo total = precio del tour + extras ---
-    const precioServicio = useWatch({ control: form.control, name: "precioServicio" })
-    const costoAdicionales = useWatch({ control: form.control, name: "costoAdicionales" })
+    const precioServicio = useWatch({
+        control: form.control,
+        name: "precioServicio",
+    })
+
+    const costoAdicionales = useWatch({
+        control: form.control,
+        name: "costoAdicionales",
+    })
+
     useEffect(() => {
-        form.setValue("costoTotal", Number(precioServicio) + Number(costoAdicionales))
+        form.setValue(
+            "costoTotal",
+            Number(precioServicio) +
+            Number(costoAdicionales)
+        )
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [precioServicio, costoAdicionales])
 
-    // --- Consultar disponibilidad real cada vez que cambian los datos clave ---
-    const horaFin = useWatch({ control: form.control, name: "horaFin" })
+    // ---------------------------------------------------------
+    // HORARIO DEL ESTABLECIMIENTO
+    // ---------------------------------------------------------
+
+    // Traduce la fecha elegida a nombre de día en español, y busca el
+    // horario de atención de ESE día específico en el catálogo del API
+    // (no asumimos nada fijo, cada día puede tener su propio rango u
+    // estar inactivo).
+    const DIAS_SEMANA = [
+        "Domingo",
+        "Lunes",
+        "Martes",
+        "Miércoles",
+        "Jueves",
+        "Viernes",
+        "Sábado",
+    ]
+
+    const horarioDelDia = useMemo(() => {
+        if (!fecha || !horarios) return null
+
+        const diaSemana =
+            DIAS_SEMANA[
+                new Date(
+                    fecha + "T00:00:00"
+                ).getDay()
+            ]
+
+        return (
+            horarios.find(
+                (h) =>
+                    h.diaSemana?.nombre ===
+                    diaSemana
+            ) ?? null
+        )
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fecha, horarios])
+
+    // ---------------------------------------------------------
+    // AGENDA DEL GUÍA
+    // ---------------------------------------------------------
+
+    // La agenda se consulta cada vez que cambia el guía o la fecha.
+    // Esta información se utiliza tanto para mostrar la agenda como para
+    // calcular cuáles horarios quedan libres.
+    const {
+        data: agendaGuia,
+    } = useFetch(
+        () =>
+            empleadoId && fecha
+                ? citasService.agendaEmpleado(
+                    empleadoId,
+                    fecha
+                )
+                : Promise.resolve({
+                    data: null,
+                }),
+        [empleadoId, fecha]
+    )
+
+    // ---------------------------------------------------------
+    // HORARIOS DISPONIBLES
+    // ---------------------------------------------------------
+
+    // El requisito indica que se deben mostrar únicamente los horarios
+    // disponibles para el empleado seleccionado.
+    //
+    // Por eso ya NO utilizamos un <Input type="time"> que permita escribir
+    // cualquier hora.
+    //
+    // Generamos opciones cada 30 minutos dentro del horario de atención.
+    // Una opción se elimina si:
+    //
+    // 1. El establecimiento está cerrado ese día.
+    // 2. El tour no cabe completo dentro del horario de atención.
+    // 3. Se cruza con una cita existente del guía.
+    // 4. Se cruza con una restricción del guía.
+    //
+    // En edición se excluye la propia cita para que su horario actual
+    // continúe apareciendo como disponible.
+    const horariosDisponibles = useMemo(() => {
+        if (
+            !empleadoId ||
+            !servicioId ||
+            !fecha ||
+            !duracionMinutos ||
+            !horarioDelDia?.activo ||
+            !agendaGuia
+        ) {
+            return []
+        }
+
+        if (
+            !horarioDelDia.horaInicio ||
+            !horarioDelDia.horaFin
+        ) {
+            return []
+        }
+
+        const inicioAtencion =
+            minutosDesdeMedianoche(
+                horarioDelDia.horaInicio
+            )
+
+        const finAtencion =
+            minutosDesdeMedianoche(
+                horarioDelDia.horaFin
+            )
+
+        if (
+            finAtencion <=
+            inicioAtencion
+        ) {
+            return []
+        }
+
+        const citas =
+            agendaGuia.citas ?? []
+
+        const restricciones =
+            agendaGuia.restricciones ?? []
+
+        // Determina si dos intervalos de tiempo se cruzan.
+        const seCruzan = (
+            inicioA,
+            finA,
+            inicioB,
+            finB
+        ) => {
+            return (
+                inicioA < finB &&
+                finA > inicioB
+            )
+        }
+
+        // Comprueba si una hora candidata está ocupada por una cita
+        // o por una restricción del empleado.
+        const estaOcupado = (
+            inicio,
+            fin
+        ) => {
+            // -----------------------------------------
+            // CITAS EXISTENTES
+            // -----------------------------------------
+
+            const hayCita =
+                citas.some((cita) => {
+                    // En edición, la propia cita no debe bloquear
+                    // el horario que estamos modificando.
+                    if (
+                        esEdicion &&
+                        Number(cita.id) ===
+                        Number(id)
+                    ) {
+                        return false
+                    }
+
+                    if (
+                        !cita.horaInicio ||
+                        !cita.horaFin
+                    ) {
+                        return false
+                    }
+
+                    const inicioCita =
+                        minutosDesdeMedianoche(
+                            cita.horaInicio
+                        )
+
+                    const finCita =
+                        minutosDesdeMedianoche(
+                            cita.horaFin
+                        )
+
+                    return seCruzan(
+                        inicio,
+                        fin,
+                        inicioCita,
+                        finCita
+                    )
+                })
+
+            if (hayCita) {
+                return true
+            }
+
+            // -----------------------------------------
+            // RESTRICCIONES
+            // -----------------------------------------
+
+            const hayRestriccion =
+                restricciones.some(
+                    (restriccion) => {
+                        // Una restricción de todo el día
+                        // bloquea cualquier horario.
+                        if (
+                            restriccion.todoElDia
+                        ) {
+                            return true
+                        }
+
+                        if (
+                            !restriccion.horaInicio ||
+                            !restriccion.horaFin
+                        ) {
+                            return false
+                        }
+
+                        const inicioRestriccion =
+                            minutosDesdeMedianoche(
+                                restriccion.horaInicio
+                            )
+
+                        const finRestriccion =
+                            minutosDesdeMedianoche(
+                                restriccion.horaFin
+                            )
+
+                        return seCruzan(
+                            inicio,
+                            fin,
+                            inicioRestriccion,
+                            finRestriccion
+                        )
+                    }
+                )
+
+            return hayRestriccion
+        }
+
+        const opciones = []
+
+        // Generamos posibles horas cada 30 minutos.
+        //
+        // Por ejemplo, si el horario es 08:00–17:00:
+        //
+        // 08:00
+        // 08:30
+        // 09:00
+        // 09:30
+        // ...
+        // 16:00
+        //
+        // Pero solo agregamos aquellas en las que el tour completo cabe
+        // y el empleado realmente está disponible.
+        for (
+            let inicio = inicioAtencion;
+            inicio + Number(duracionMinutos) <=
+            finAtencion;
+            inicio += 30
+        ) {
+            const fin =
+                inicio +
+                Number(duracionMinutos)
+
+            // Si el empleado está ocupado durante alguna parte
+            // del tour, esta opción NO se muestra.
+            if (
+                estaOcupado(
+                    inicio,
+                    fin
+                )
+            ) {
+                continue
+            }
+
+            const horas =
+                Math.floor(
+                    inicio / 60
+                )
+
+            const minutos =
+                inicio % 60
+
+            const valor =
+                `${String(horas).padStart(2, "0")}:${String(minutos).padStart(2, "0")}`
+
+            const horaFinal =
+                sumarMinutos(
+                    valor,
+                    Number(duracionMinutos)
+                )
+
+            opciones.push({
+                valor,
+                horaFinal,
+                etiqueta:
+                    `${valor} – ${horaFinal}`,
+            })
+        }
+
+        return opciones
+    }, [
+        empleadoId,
+        servicioId,
+        fecha,
+        duracionMinutos,
+        horarioDelDia,
+        agendaGuia,
+        esEdicion,
+        id,
+    ])
+
+    // ---------------------------------------------------------
+    // LIMPIAR HORA SI DEJA DE ESTAR DISPONIBLE
+    // ---------------------------------------------------------
+
+    // Si el usuario cambia el guía, fecha o tour, la hora que tenía
+    // seleccionada puede dejar de ser válida.
+    //
+    // En ese caso la eliminamos para evitar enviar al backend una hora
+    // que ya no aparece como disponible.
+    useEffect(() => {
+        if (!horaInicio) {
+            return
+        }
+
+        const sigueDisponible =
+            horariosDisponibles.some(
+                (horario) =>
+                    horario.valor ===
+                    horaInicio
+            )
+
+        if (!sigueDisponible) {
+            form.setValue(
+                "horaInicio",
+                ""
+            )
+
+            form.setValue(
+                "horaFin",
+                ""
+            )
+        }
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [horariosDisponibles])
+
+    // ---------------------------------------------------------
+    // CONSULTAR DISPONIBILIDAD REAL
+    // ---------------------------------------------------------
+
+    // Aunque ahora mostramos solamente horarios disponibles, mantenemos
+    // esta consulta porque el backend sigue siendo la validación definitiva
+    // antes de guardar la reserva.
+    const horaFin = useWatch({
+        control: form.control,
+        name: "horaFin",
+    })
+
     useEffect(() => {
         // Limpiamos el resultado anterior ANTES de la consulta nueva (patrón
         // estándar de "descartar resultado obsoleto mientras se recarga").
@@ -208,7 +690,16 @@ export default function ReservaFormPage() {
         // puede distinguir este caso legítimo del problemático.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setDisponibilidad(null)
-        if (!empleadoId || !servicioId || !fecha || !horaInicio || !horaFin) return
+
+        if (
+            !empleadoId ||
+            !servicioId ||
+            !fecha ||
+            !horaInicio ||
+            !horaFin
+        ) {
+            return
+        }
 
         // Chequeo proactivo ANTES de llamar al API: si la hora de fin quedó
         // "antes" que la de inicio (en minutos desde medianoche), significa
@@ -217,33 +708,64 @@ export default function ReservaFormPage() {
         // justo lo que el backend rechaza con el mensaje genérico de
         // "Datos de entrada inválidos"; lo detectamos antes para dar un
         // mensaje que sí explique qué pasó.
-        if (minutosDesdeMedianoche(horaFin) <= minutosDesdeMedianoche(horaInicio)) {
+        if (
+            minutosDesdeMedianoche(
+                horaFin
+            ) <=
+            minutosDesdeMedianoche(
+                horaInicio
+            )
+        ) {
             setDisponibilidad({
                 disponible: false,
                 motivo:
                     "Con esa hora de inicio, el tour terminaría después de medianoche. Elige una hora más temprana.",
             })
+
             return
         }
 
-        setConsultandoDisponibilidad(true)
+        setConsultandoDisponibilidad(
+            true
+        )
+
         citasService
             .disponibilidad({
-                empleadoId: Number(empleadoId),
-                servicioId: Number(servicioId),
+                empleadoId:
+                    Number(empleadoId),
+
+                servicioId:
+                    Number(servicioId),
+
                 fecha,
+
                 horaInicio,
+
                 horaFin,
+
                 // Solo se manda si aplica: en creación no existe cita que
                 // excluir, y algunos schemas de Zod rechazan "null" cuando
                 // el campo es .optional() sin .nullable().
-                ...(esEdicion ? { citaIdExcluir: Number(id) } : {}),
+                ...(esEdicion
+                    ? {
+                        citaIdExcluir:
+                            Number(id),
+                    }
+                    : {}),
             })
-            .then((response) => setDisponibilidad(response.data))
+            .then((response) =>
+                setDisponibilidad(
+                    response.data
+                )
+            )
             .catch((err) => {
                 // Traducimos el mensaje genérico de validación a algo que
                 // la persona pueda entender sin saber qué es un "schema".
-                const esGenerico = /datos de entrada inv[aá]lidos/i.test(err.message)
+                const esGenerico =
+                    /datos de entrada inv[aá]lidos/i.test(
+                        err.message
+                    )
+
                 setDisponibilidad({
                     disponible: false,
                     motivo: esGenerico
@@ -251,65 +773,123 @@ export default function ReservaFormPage() {
                         : err.message,
                 })
             })
-            .finally(() => setConsultandoDisponibilidad(false))
-    }, [empleadoId, servicioId, fecha, horaInicio, horaFin, esEdicion, id])
+            .finally(() =>
+                setConsultandoDisponibilidad(
+                    false
+                )
+            )
+    }, [
+        empleadoId,
+        servicioId,
+        fecha,
+        horaInicio,
+        horaFin,
+        esEdicion,
+        id,
+    ])
 
-    const tourSeleccionado = useMemo(
-        () => tours?.find((t) => t.id === Number(servicioId)),
-        [tours, servicioId]
-    )
+    const tourSeleccionado =
+        useMemo(
+            () =>
+                tours?.find(
+                    (t) =>
+                        t.id ===
+                        Number(servicioId)
+                ),
+            [tours, servicioId]
+        )
 
-    const costoTotal = useWatch({ control: form.control, name: "costoTotal" })
+    const costoTotal = useWatch({
+        control: form.control,
+        name: "costoTotal",
+    })
 
-    // Traduce la fecha elegida a nombre de día en español, y busca el
-    // horario de atención de ESE día específico en el catálogo del API
-    // (no asumimos nada fijo, cada día puede tener su propio rango u
-    // estar inactivo).
-    const DIAS_SEMANA = [
-        "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado",
-    ]
-    const horarioDelDia = useMemo(() => {
-        if (!fecha || !horarios) return null
-        const diaSemana = DIAS_SEMANA[new Date(fecha + "T00:00:00").getDay()]
-        return horarios.find((h) => h.diaSemana?.nombre === diaSemana) ?? null
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [fecha, horarios])
+    async function onSubmit(
+        valores
+    ) {
+        if (
+            disponibilidad &&
+            !disponibilidad.disponible
+        ) {
+            toast.error(
+                "No se puede guardar: el horario elegido no está disponible."
+            )
 
-    async function onSubmit(valores) {
-        if (disponibilidad && !disponibilidad.disponible) {
-            toast.error("No se puede guardar: el horario elegido no está disponible.")
+            return
+        }
+
+        // El formulario ya no permite enviar una hora que no esté
+        // dentro de las opciones calculadas como disponibles.
+        if (
+            !valores.horaInicio ||
+            !valores.horaFin
+        ) {
+            toast.error(
+                "Selecciona un horario disponible."
+            )
+
             return
         }
 
         setEnviando(true)
+
         try {
             if (esEdicion) {
                 // El API NO permite tocar estadoCitaId/creadoPorUsuarioId en un PUT.
-                await citasService.actualizar(id, valores)
-                toast.success("Reserva actualizada correctamente")
+                await citasService.actualizar(
+                    id,
+                    valores
+                )
+
+                toast.success(
+                    "Reserva actualizada correctamente"
+                )
             } else {
-                const pendiente = estados?.find((e) => e.nombre === "Pendiente")
+                const pendiente =
+                    estados?.find(
+                        (e) =>
+                            e.nombre ===
+                            "Pendiente"
+                    )
+
                 if (!pendiente) {
-                    toast.error("No se encontró el estado 'Pendiente' en el sistema.")
+                    toast.error(
+                        "No se encontró el estado 'Pendiente' en el sistema."
+                    )
+
                     return
                 }
+
                 await citasService.crear({
                     ...valores,
-                    estadoCitaId: pendiente.id,
-                    creadoPorUsuarioId: user.id,
+                    estadoCitaId:
+                        pendiente.id,
+                    creadoPorUsuarioId:
+                        user.id,
                 })
-                toast.success("Reserva creada correctamente")
+
+                toast.success(
+                    "Reserva creada correctamente"
+                )
             }
+
             navigate("/reservas")
         } catch (err) {
-            toast.error(err.message || "No se pudo guardar la reserva")
+            toast.error(
+                err.message ||
+                "No se pudo guardar la reserva"
+            )
         } finally {
             setEnviando(false)
         }
     }
 
     if (cargandoCita) {
-        return <p className="mx-auto max-w-2xl px-4 py-12 text-center">Cargando reserva...</p>
+        return (
+            <p className="mx-auto max-w-2xl px-4 py-12 text-center">
+                Cargando reserva...
+            </p>
+        )
     }
 
     return (
@@ -317,41 +897,103 @@ export default function ReservaFormPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl">
-                        {esEdicion ? "Editar reserva" : "Nueva reserva"}
+                        {esEdicion
+                            ? "Editar reserva"
+                            : "Nueva reserva"}
                     </CardTitle>
                 </CardHeader>
+
                 <CardContent>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                        <form
+                            onSubmit={form.handleSubmit(
+                                onSubmit
+                            )}
+                            className="space-y-5"
+                        >
                             <FormField
                                 control={form.control}
                                 name="clienteId"
-                                render={({ field }) => (
+                                render={({
+                                    field,
+                                }) => (
                                     <FormItem>
-                                        <FormLabel>Cliente</FormLabel>
+                                        <FormLabel>
+                                            Cliente
+                                        </FormLabel>
+
                                         <Select
-                                            onValueChange={field.onChange}
-                                            value={field.value ? String(field.value) : ""}
+                                            onValueChange={
+                                                field.onChange
+                                            }
+                                            value={
+                                                field.value
+                                                    ? String(
+                                                        field.value
+                                                    )
+                                                    : ""
+                                            }
                                         >
                                             <FormControl>
                                                 <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Selecciona un cliente">
-                                                        {(value) => {
-                                                            if (!value) return "Selecciona un cliente"
-                                                            const c = clientes?.find((c) => String(c.id) === value)
-                                                            return c ? `${c.nombre} ${c.primerApellido}` : null
+                                                        {(
+                                                            value
+                                                        ) => {
+                                                            if (
+                                                                !value
+                                                            ) {
+                                                                return "Selecciona un cliente"
+                                                            }
+
+                                                            const c =
+                                                                clientes?.find(
+                                                                    (
+                                                                        c
+                                                                    ) =>
+                                                                        String(
+                                                                            c.id
+                                                                        ) ===
+                                                                        value
+                                                                )
+
+                                                            return c
+                                                                ? `${c.nombre} ${c.primerApellido}`
+                                                                : null
                                                         }}
                                                     </SelectValue>
                                                 </SelectTrigger>
                                             </FormControl>
+
                                             <SelectContent>
-                                                {clientes?.map((c) => (
-                                                    <SelectItem key={c.id} value={String(c.id)}>
-                                                        {c.nombre} {c.primerApellido} — {c.correo}
-                                                    </SelectItem>
-                                                ))}
+                                                {clientes?.map(
+                                                    (
+                                                        c
+                                                    ) => (
+                                                        <SelectItem
+                                                            key={
+                                                                c.id
+                                                            }
+                                                            value={String(
+                                                                c.id
+                                                            )}
+                                                        >
+                                                            {
+                                                                c.nombre
+                                                            }{" "}
+                                                            {
+                                                                c.primerApellido
+                                                            }{" "}
+                                                            —{" "}
+                                                            {
+                                                                c.correo
+                                                            }
+                                                        </SelectItem>
+                                                    )
+                                                )}
                                             </SelectContent>
                                         </Select>
+
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -360,37 +1002,86 @@ export default function ReservaFormPage() {
                             <FormField
                                 control={form.control}
                                 name="servicioId"
-                                render={({ field }) => (
+                                render={({
+                                    field,
+                                }) => (
                                     <FormItem>
-                                        <FormLabel>Tour</FormLabel>
+                                        <FormLabel>
+                                            Tour
+                                        </FormLabel>
+
                                         <Select
-                                            onValueChange={field.onChange}
-                                            value={field.value ? String(field.value) : ""}
+                                            onValueChange={
+                                                field.onChange
+                                            }
+                                            value={
+                                                field.value
+                                                    ? String(
+                                                        field.value
+                                                    )
+                                                    : ""
+                                            }
                                         >
                                             <FormControl>
                                                 <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Selecciona un tour">
-                                                        {(value) =>
+                                                        {(
+                                                            value
+                                                        ) =>
                                                             !value
                                                                 ? "Selecciona un tour"
-                                                                : toursDisponibles?.find((t) => String(t.id) === value)?.nombre
+                                                                : toursDisponibles?.find(
+                                                                    (
+                                                                        t
+                                                                    ) =>
+                                                                        String(
+                                                                            t.id
+                                                                        ) ===
+                                                                        value
+                                                                )?.nombre
                                                         }
                                                     </SelectValue>
                                                 </SelectTrigger>
                                             </FormControl>
+
                                             <SelectContent>
-                                                {toursDisponibles?.map((t) => (
-                                                    <SelectItem key={t.id} value={String(t.id)}>
-                                                        {t.nombre} — {t.duracionMinutos} min
-                                                    </SelectItem>
-                                                ))}
+                                                {toursDisponibles?.map(
+                                                    (
+                                                        t
+                                                    ) => (
+                                                        <SelectItem
+                                                            key={
+                                                                t.id
+                                                            }
+                                                            value={String(
+                                                                t.id
+                                                            )}
+                                                        >
+                                                            {
+                                                                t.nombre
+                                                            }{" "}
+                                                            —{" "}
+                                                            {
+                                                                t.duracionMinutos
+                                                            }{" "}
+                                                            min
+                                                        </SelectItem>
+                                                    )
+                                                )}
                                             </SelectContent>
                                         </Select>
-                                        {esEmpleado && toursDisponibles?.length === 0 && (
-                                            <p className="text-sm text-muted-foreground">
-                                                No tienes tours asignados todavía.
-                                            </p>
-                                        )}
+
+                                        {esEmpleado &&
+                                            toursDisponibles?.length ===
+                                            0 && (
+                                                <p className="text-sm text-muted-foreground">
+                                                    No tienes
+                                                    tours
+                                                    asignados
+                                                    todavía.
+                                                </p>
+                                            )}
+
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -400,41 +1091,84 @@ export default function ReservaFormPage() {
                             <FormField
                                 control={form.control}
                                 name="adicionalIds"
-                                render={({ field }) => (
+                                render={({
+                                    field,
+                                }) => (
                                     <FormItem>
-                                        <FormLabel>Extras (opcional)</FormLabel>
+                                        <FormLabel>
+                                            Extras
+                                            (opcional)
+                                        </FormLabel>
+
                                         <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-3">
-                                            {extras?.length === 0 && (
-                                                <p className="text-sm text-muted-foreground">
-                                                    No hay extras activos todavía.
-                                                </p>
-                                            )}
-                                            {extras?.map((extra) => {
-                                                const seleccionado = field.value.includes(extra.id)
-                                                return (
-                                                    <label
-                                                        key={extra.id}
-                                                        className="flex cursor-pointer items-center justify-between gap-2 text-sm"
-                                                    >
-                                                        <span className="flex items-center gap-2">
-                                                            <Checkbox
-                                                                checked={seleccionado}
-                                                                onCheckedChange={(marcado) => {
-                                                                    field.onChange(
+                                            {extras?.length ===
+                                                0 && (
+                                                    <p className="text-sm text-muted-foreground">
+                                                        No hay
+                                                        extras
+                                                        activos
+                                                        todavía.
+                                                    </p>
+                                                )}
+
+                                            {extras?.map(
+                                                (
+                                                    extra
+                                                ) => {
+                                                    const seleccionado =
+                                                        field.value.includes(
+                                                            extra.id
+                                                        )
+
+                                                    return (
+                                                        <label
+                                                            key={
+                                                                extra.id
+                                                            }
+                                                            className="flex cursor-pointer items-center justify-between gap-2 text-sm"
+                                                        >
+                                                            <span className="flex items-center gap-2">
+                                                                <Checkbox
+                                                                    checked={
+                                                                        seleccionado
+                                                                    }
+                                                                    onCheckedChange={(
                                                                         marcado
-                                                                            ? [...field.value, extra.id]
-                                                                            : field.value.filter((v) => v !== extra.id)
-                                                                    )
-                                                                }}
-                                                            />
-                                                            {extra.nombre}
-                                                        </span>
-                                                        <span className="text-muted-foreground">
-                                                            ₡{Number(extra.precio).toLocaleString("es-CR")}
-                                                        </span>
-                                                    </label>
-                                                )
-                                            })}
+                                                                    ) => {
+                                                                        field.onChange(
+                                                                            marcado
+                                                                                ? [
+                                                                                    ...field.value,
+                                                                                    extra.id,
+                                                                                ]
+                                                                                : field.value.filter(
+                                                                                    (
+                                                                                        v
+                                                                                    ) =>
+                                                                                        v !==
+                                                                                        extra.id
+                                                                                )
+                                                                        )
+                                                                    }}
+                                                                />
+
+                                                                {
+                                                                    extra.nombre
+                                                                }
+                                                            </span>
+
+                                                            <span className="text-muted-foreground">
+                                                                ₡
+                                                                {Number(
+                                                                    extra.precio
+                                                                ).toLocaleString(
+                                                                    "es-CR"
+                                                                )}
+                                                            </span>
+                                                        </label>
+                                                    )
+                                                }
+                                            )}
                                         </div>
                                     </FormItem>
                                 )}
@@ -445,7 +1179,10 @@ export default function ReservaFormPage() {
                                 Administrador, igual que antes. */}
                             {esEmpleado ? (
                                 <div>
-                                    <p className="mb-1.5 text-sm font-medium">Guía</p>
+                                    <p className="mb-1.5 text-sm font-medium">
+                                        Guía
+                                    </p>
+
                                     <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
                                         {propioEmpleado
                                             ? `${propioEmpleado.usuario?.nombre} ${propioEmpleado.usuario?.primerApellido} (tú)`
@@ -454,15 +1191,33 @@ export default function ReservaFormPage() {
                                 </div>
                             ) : (
                                 <FormField
-                                    control={form.control}
+                                    control={
+                                        form.control
+                                    }
                                     name="empleadoId"
-                                    render={({ field }) => (
+                                    render={({
+                                        field,
+                                    }) => (
                                         <FormItem>
-                                            <FormLabel>Guía</FormLabel>
+                                            <FormLabel>
+                                                Guía
+                                            </FormLabel>
+
                                             <Select
-                                                onValueChange={field.onChange}
-                                                value={field.value ? String(field.value) : ""}
-                                                disabled={!servicioId || cargandoEmpleados}
+                                                onValueChange={
+                                                    field.onChange
+                                                }
+                                                value={
+                                                    field.value
+                                                        ? String(
+                                                            field.value
+                                                        )
+                                                        : ""
+                                                }
+                                                disabled={
+                                                    !servicioId ||
+                                                    cargandoEmpleados
+                                                }
                                             >
                                                 <FormControl>
                                                     <SelectTrigger className="w-full">
@@ -473,15 +1228,28 @@ export default function ReservaFormPage() {
                                                                     : "Primero elige un tour"
                                                             }
                                                         >
-                                                            {(value) => {
-                                                                if (!value) {
+                                                            {(
+                                                                value
+                                                            ) => {
+                                                                if (
+                                                                    !value
+                                                                ) {
                                                                     return servicioId
                                                                         ? "Selecciona un guía"
                                                                         : "Primero elige un tour"
                                                                 }
-                                                                const e = empleadosDisponibles?.find(
-                                                                    (e) => String(e.id) === value
-                                                                )
+
+                                                                const e =
+                                                                    empleadosDisponibles?.find(
+                                                                        (
+                                                                            e
+                                                                        ) =>
+                                                                            String(
+                                                                                e.id
+                                                                            ) ===
+                                                                            value
+                                                                    )
+
                                                                 return e
                                                                     ? `${e.usuario?.nombre} ${e.usuario?.primerApellido}`
                                                                     : null
@@ -489,19 +1257,48 @@ export default function ReservaFormPage() {
                                                         </SelectValue>
                                                     </SelectTrigger>
                                                 </FormControl>
+
                                                 <SelectContent>
-                                                    {empleadosDisponibles?.map((e) => (
-                                                        <SelectItem key={e.id} value={String(e.id)}>
-                                                            {e.usuario?.nombre} {e.usuario?.primerApellido}
-                                                        </SelectItem>
-                                                    ))}
+                                                    {empleadosDisponibles?.map(
+                                                        (
+                                                            e
+                                                        ) => (
+                                                            <SelectItem
+                                                                key={
+                                                                    e.id
+                                                                }
+                                                                value={String(
+                                                                    e.id
+                                                                )}
+                                                            >
+                                                                {
+                                                                    e.usuario?.nombre
+                                                                }{" "}
+                                                                {
+                                                                    e.usuario?.primerApellido
+                                                                }
+                                                            </SelectItem>
+                                                        )
+                                                    )}
                                                 </SelectContent>
                                             </Select>
-                                            {servicioId && !cargandoEmpleados && empleadosDisponibles?.length === 0 && (
-                                                <p className="text-sm text-muted-foreground">
-                                                    Ningún guía activo puede atender este tour todavía.
-                                                </p>
-                                            )}
+
+                                            {servicioId &&
+                                                !cargandoEmpleados &&
+                                                empleadosDisponibles?.length ===
+                                                0 && (
+                                                    <p className="text-sm text-muted-foreground">
+                                                        Ningún
+                                                        guía
+                                                        activo
+                                                        puede
+                                                        atender
+                                                        este
+                                                        tour
+                                                        todavía.
+                                                    </p>
+                                                )}
+
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -510,32 +1307,114 @@ export default function ReservaFormPage() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField
-                                    control={form.control}
+                                    control={
+                                        form.control
+                                    }
                                     name="fecha"
-                                    render={({ field }) => (
+                                    render={({
+                                        field,
+                                    }) => (
                                         <FormItem>
-                                            <FormLabel>Fecha</FormLabel>
+                                            <FormLabel>
+                                                Fecha
+                                            </FormLabel>
+
                                             <FormControl>
                                                 <Input
                                                     type="date"
-                                                    min={new Date().toISOString().slice(0, 10)}
+                                                    min={
+                                                        new Date()
+                                                            .toISOString()
+                                                            .slice(
+                                                                0,
+                                                                10
+                                                            )
+                                                    }
                                                     {...field}
                                                 />
                                             </FormControl>
+
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
 
+                                {/* Ahora la hora NO es un campo libre.
+                                    Solo se muestran las opciones que quedaron
+                                    disponibles para el guía, fecha y tour elegidos. */}
                                 <FormField
-                                    control={form.control}
+                                    control={
+                                        form.control
+                                    }
                                     name="horaInicio"
-                                    render={({ field }) => (
+                                    render={({
+                                        field,
+                                    }) => (
                                         <FormItem>
-                                            <FormLabel>Hora de inicio</FormLabel>
-                                            <FormControl>
-                                                <Input type="time" {...field} />
-                                            </FormControl>
+                                            <FormLabel>
+                                                Hora de inicio
+                                            </FormLabel>
+
+                                            <Select
+                                                value={
+                                                    field.value ||
+                                                    ""
+                                                }
+                                                onValueChange={
+                                                    field.onChange
+                                                }
+                                                disabled={
+                                                    !empleadoId ||
+                                                    !fecha ||
+                                                    !servicioId ||
+                                                    !horarioDelDia?.activo ||
+                                                    horariosDisponibles.length ===
+                                                    0
+                                                }
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue
+                                                            placeholder={
+                                                                !empleadoId
+                                                                    ? "Primero selecciona un guía"
+                                                                    : !fecha
+                                                                        ? "Primero selecciona una fecha"
+                                                                        : !servicioId
+                                                                            ? "Primero selecciona un tour"
+                                                                            : !horarioDelDia?.activo
+                                                                                ? "El establecimiento no atiende ese día"
+                                                                                : horariosDisponibles.length ===
+                                                                                    0
+                                                                                    ? "No hay horarios disponibles"
+                                                                                    : "Selecciona un horario"
+                                                            }
+                                                        />
+                                                    </SelectTrigger>
+                                                </FormControl>
+
+                                                <SelectContent>
+                                                    {horariosDisponibles.map(
+                                                        (
+                                                            horario
+                                                        ) => (
+                                                            <SelectItem
+                                                                key={
+                                                                    horario.valor
+                                                                }
+                                                                value={
+                                                                    horario.valor
+                                                                }
+                                                            >
+                                                                {
+                                                                    horario.etiqueta
+                                                                }
+                                                            </SelectItem>
+                                                        )
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -553,37 +1432,61 @@ export default function ReservaFormPage() {
                             )}
 
                             {/* Agenda del guía ese día — solo informativa */}
-                            {empleadoId && fecha && (
-                                <AgendaDelGuia empleadoId={empleadoId} fecha={fecha} />
-                            )}
+                            {empleadoId &&
+                                fecha && (
+                                    <AgendaDelGuia
+                                        empleadoId={
+                                            empleadoId
+                                        }
+                                        fecha={
+                                            fecha
+                                        }
+                                    />
+                                )}
 
                             {/* Resultado de disponibilidad en tiempo real */}
                             {consultandoDisponibilidad && (
-                                <p className="text-sm text-muted-foreground">Verificando disponibilidad...</p>
-                            )}
-                            {!consultandoDisponibilidad && disponibilidad && (
-                                <p
-                                    className={
-                                        disponibilidad.disponible
-                                            ? "text-sm font-medium text-green-600"
-                                            : "text-sm font-medium text-destructive"
-                                    }
-                                >
-                                    {disponibilidad.disponible
-                                        ? "Horario disponible."
-                                        : `No disponible: ${disponibilidad.motivo}`}
+                                <p className="text-sm text-muted-foreground">
+                                    Verificando disponibilidad...
                                 </p>
                             )}
 
+                            {!consultandoDisponibilidad &&
+                                disponibilidad && (
+                                    <p
+                                        className={
+                                            disponibilidad.disponible
+                                                ? "text-sm font-medium text-green-600"
+                                                : "text-sm font-medium text-destructive"
+                                        }
+                                    >
+                                        {disponibilidad.disponible
+                                            ? "Horario disponible."
+                                            : `No disponible: ${disponibilidad.motivo}`}
+                                    </p>
+                                )}
+
                             <FormField
-                                control={form.control}
+                                control={
+                                    form.control
+                                }
                                 name="observaciones"
-                                render={({ field }) => (
+                                render={({
+                                    field,
+                                }) => (
                                     <FormItem>
-                                        <FormLabel>Observaciones (opcional)</FormLabel>
+                                        <FormLabel>
+                                            Observaciones
+                                            (opcional)
+                                        </FormLabel>
+
                                         <FormControl>
-                                            <Textarea rows={3} {...field} />
+                                            <Textarea
+                                                rows={3}
+                                                {...field}
+                                            />
                                         </FormControl>
+
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -593,26 +1496,81 @@ export default function ReservaFormPage() {
                             {tourSeleccionado && (
                                 <div className="rounded-lg border p-3 text-sm">
                                     <div className="flex justify-between">
-                                        <span>Precio del tour</span>
-                                        <span>₡{Number(precioServicio).toLocaleString("es-CR")}</span>
+                                        <span>
+                                            Precio del
+                                            tour
+                                        </span>
+
+                                        <span>
+                                            ₡
+                                            {Number(
+                                                precioServicio
+                                            ).toLocaleString(
+                                                "es-CR"
+                                            )}
+                                        </span>
                                     </div>
+
                                     <div className="flex justify-between">
-                                        <span>Extras</span>
-                                        <span>₡{Number(costoAdicionales).toLocaleString("es-CR")}</span>
+                                        <span>
+                                            Extras
+                                        </span>
+
+                                        <span>
+                                            ₡
+                                            {Number(
+                                                costoAdicionales
+                                            ).toLocaleString(
+                                                "es-CR"
+                                            )}
+                                        </span>
                                     </div>
+
                                     <div className="flex justify-between text-muted-foreground">
-                                        <span>Duración</span>
-                                        <span>{duracionMinutos} minutos</span>
+                                        <span>
+                                            Duración
+                                        </span>
+
+                                        <span>
+                                            {
+                                                duracionMinutos
+                                            }{" "}
+                                            minutos
+                                        </span>
                                     </div>
-                                    {horaInicio && horaFin && (
-                                        <div className="flex justify-between text-muted-foreground">
-                                            <span>Horario</span>
-                                            <span>{horaInicio} – {horaFin}</span>
-                                        </div>
-                                    )}
+
+                                    {horaInicio &&
+                                        horaFin && (
+                                            <div className="flex justify-between text-muted-foreground">
+                                                <span>
+                                                    Horario
+                                                </span>
+
+                                                <span>
+                                                    {
+                                                        horaInicio
+                                                    }{" "}
+                                                    –{" "}
+                                                    {
+                                                        horaFin
+                                                    }
+                                                </span>
+                                            </div>
+                                        )}
+
                                     <div className="mt-1 flex justify-between border-t pt-1 text-base font-semibold">
-                                        <span>Total</span>
-                                        <span>₡{Number(costoTotal).toLocaleString("es-CR")}</span>
+                                        <span>
+                                            Total
+                                        </span>
+
+                                        <span>
+                                            ₡
+                                            {Number(
+                                                costoTotal
+                                            ).toLocaleString(
+                                                "es-CR"
+                                            )}
+                                        </span>
                                     </div>
                                 </div>
                             )}
@@ -620,7 +1578,15 @@ export default function ReservaFormPage() {
                             <div className="flex gap-3 pt-2">
                                 <Button
                                     type="submit"
-                                    disabled={enviando || (disponibilidad && !disponibilidad.disponible)}
+                                    disabled={
+                                        enviando ||
+                                        !horaInicio ||
+                                        !horaFin ||
+                                        (
+                                            disponibilidad &&
+                                            !disponibilidad.disponible
+                                        )
+                                    }
                                     className="flex-1"
                                 >
                                     {enviando
@@ -629,10 +1595,15 @@ export default function ReservaFormPage() {
                                             ? "Guardar cambios"
                                             : "Crear reserva"}
                                 </Button>
+
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() => navigate("/reservas")}
+                                    onClick={() =>
+                                        navigate(
+                                            "/reservas"
+                                        )
+                                    }
                                 >
                                     Cancelar
                                 </Button>
@@ -649,9 +1620,18 @@ export default function ReservaFormPage() {
 // separó del cuerpo principal solo para poder llamar useFetch con
 // parámetros ya garantizados (empleadoId y fecha no vacíos), sin ensuciar
 // el componente de arriba con otro condicional más.
-function AgendaDelGuia({ empleadoId, fecha }) {
-    const { data: agenda } = useFetch(
-        () => citasService.agendaEmpleado(empleadoId, fecha),
+function AgendaDelGuia({
+    empleadoId,
+    fecha,
+}) {
+    const {
+        data: agenda,
+    } = useFetch(
+        () =>
+            citasService.agendaEmpleado(
+                empleadoId,
+                fecha
+            ),
         [empleadoId, fecha]
     )
 
@@ -660,30 +1640,69 @@ function AgendaDelGuia({ empleadoId, fecha }) {
     return (
         <div className="rounded-lg border p-3 text-sm">
             <p className="mb-2 font-medium">
-                Agenda de {agenda.empleado?.usuario?.nombre} el{" "}
-                {new Date(fecha + "T00:00:00").toLocaleDateString("es-CR")}
+                Agenda de{" "}
+                {
+                    agenda.empleado
+                        ?.usuario?.nombre
+                }{" "}
+                el{" "}
+                {new Date(
+                    fecha + "T00:00:00"
+                ).toLocaleDateString(
+                    "es-CR"
+                )}
             </p>
-            {agenda.citas?.length > 0 ? (
+
+            {agenda.citas?.length >
+            0 ? (
                 <ul className="space-y-1 text-muted-foreground">
-                    {agenda.citas.map((c) => (
-                        <li key={c.id}>
-                            {c.horaInicio}–{c.horaFin}: ocupado ({c.servicio?.nombre})
-                        </li>
-                    ))}
+                    {agenda.citas.map(
+                        (c) => (
+                            <li key={c.id}>
+                                {
+                                    c.horaInicio
+                                }
+                                –
+                                {
+                                    c.horaFin
+                                }
+                                : ocupado (
+                                {
+                                    c.servicio
+                                        ?.nombre
+                                }
+                                )
+                            </li>
+                        )
+                    )}
                 </ul>
             ) : (
-                <p className="text-muted-foreground">Sin citas registradas ese día.</p>
+                <p className="text-muted-foreground">
+                    Sin citas registradas
+                    ese día.
+                </p>
             )}
-            {agenda.restricciones?.length > 0 && (
-                <ul className="mt-1 space-y-1 text-destructive">
-                    {agenda.restricciones.map((r) => (
-                        <li key={r.id}>
-                            Restricción: {r.todoElDia ? "Todo el día" : `${r.horaInicio}–${r.horaFin}`}{" "}
-                            ({r.motivo})
-                        </li>
-                    ))}
-                </ul>
-            )}
+
+            {agenda.restricciones
+                ?.length > 0 && (
+                    <ul className="mt-1 space-y-1 text-destructive">
+                        {agenda.restricciones.map(
+                            (r) => (
+                                <li key={r.id}>
+                                    Restricción:{" "}
+                                    {r.todoElDia
+                                        ? "Todo el día"
+                                        : `${r.horaInicio}–${r.horaFin}`}{" "}
+                                    (
+                                    {
+                                        r.motivo
+                                    }
+                                    )
+                                </li>
+                            )
+                        )}
+                    </ul>
+                )}
         </div>
     )
 }
