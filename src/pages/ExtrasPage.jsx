@@ -1,14 +1,17 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
+import { PackagePlus, Wallet } from "lucide-react"
 
 import { useAuth } from "@/auth/useAuth"
 import { useFetch } from "@/lib/useFetch"
+import { useOrdenamiento } from "@/lib/useOrdenamiento"
 import { extrasService } from "@/services/extrasService"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import EncabezadoOrdenable from "@/components/EncabezadoOrdenable"
 import {
     Table,
     TableBody,
@@ -35,6 +38,17 @@ export default function ExtrasPage() {
         [refrescarClave]
     )
 
+    const { datosOrdenados: extrasOrdenados, criterios, alternarOrden, limpiarOrden } =
+        useOrdenamiento(
+            extras,
+            {
+                nombre: (e) => e.nombre?.toLowerCase() ?? "",
+                precio: (e) => Number(e.precio),
+                estado: (e) => (e.activo ? 1 : 0),
+            },
+            null
+        )
+
     async function handleCambiarEstado(extra) {
         try {
             // Mandamos el valor OPUESTO al actual: si está activo, lo desactivamos y viceversa.
@@ -50,9 +64,12 @@ export default function ExtrasPage() {
 
     return (
         <div className="mx-auto max-w-4xl px-4 py-10">
-            <div className="mb-8 flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-semibold">Extras del tour</h1>
+            <div className="mb-8 flex items-center justify-between gap-4">
+                <div className="border-l-4 border-ring pl-4">
+                    <h1 className="flex items-center gap-2 text-3xl font-semibold">
+                        <PackagePlus className="h-7 w-7 text-primary" />
+                        Extras del tour
+                    </h1>
                     <p className="text-muted-foreground">
                         Complementos opcionales que se pueden sumar a una reserva
                     </p>
@@ -76,66 +93,112 @@ export default function ExtrasPage() {
                 </p>
             )}
 
-            {!loading && !error && extras?.length === 0 && (
+            {!loading && !error && extrasOrdenados?.length === 0 && (
                 <p className="text-center text-muted-foreground">
                     Todavía no hay extras registrados.
                 </p>
             )}
 
-            {!loading && !error && extras?.length > 0 && (
-                <div className="rounded-xl border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Nombre</TableHead>
-                                <TableHead>Precio</TableHead>
-                                <TableHead>Estado</TableHead>
-                                <TableHead className="text-right">Acciones</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {extras.map((extra) => (
-                                <TableRow key={extra.id}>
-                                    <TableCell className="font-medium">{extra.nombre}</TableCell>
-                                    <TableCell>
-                                        {/* toLocaleString("es-CR") da formato "25 000" en vez de
-                                            "25000" — así lo pide el enunciado: nada de valores
-                                            crudos sin formatear en la interfaz. */}
-                                        ₡{Number(extra.precio).toLocaleString("es-CR")}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant={extra.activo ? "default" : "secondary"}>
-                                            {extra.activo ? "Activo" : "Inactivo"}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="flex flex-wrap justify-end gap-2">
-                                        <Button asChild variant="outline" size="sm">
-                                            <Link to={`/extras/${extra.id}`}>Ver detalle</Link>
-                                        </Button>
-
-                                        {/* Editar y Activar/Desactivar solo para Administrador,
-                                            igual que en Tours. Un Cliente o Empleado ni siquiera
-                                            ve estos botones renderizados en el DOM. */}
-                                        {esAdmin && (
-                                            <>
-                                                <Button asChild variant="outline" size="sm">
-                                                    <Link to={`/extras/${extra.id}/editar`}>Editar</Link>
-                                                </Button>
-                                                <Button
-                                                    variant={extra.activo ? "destructive" : "default"}
-                                                    size="sm"
-                                                    onClick={() => handleCambiarEstado(extra)}
-                                                >
-                                                    {extra.activo ? "Desactivar" : "Activar"}
-                                                </Button>
-                                            </>
-                                        )}
-                                    </TableCell>
+            {!loading && !error && extrasOrdenados?.length > 0 && (
+                <>
+                    <div className="mb-2 flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                            Clic en un encabezado para ordenar por esa columna — puedes
+                            combinar varias haciendo clic en más de una.
+                        </p>
+                        {criterios.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={limpiarOrden}
+                                className="text-xs font-medium text-muted-foreground underline hover:text-foreground"
+                            >
+                                Quitar orden
+                            </button>
+                        )}
+                    </div>
+                    <div className="rounded-xl border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-secondary/40">
+                                    <EncabezadoOrdenable
+                                        campo="nombre"
+                                        criterios={criterios}
+                                        onClick={alternarOrden}
+                                    >
+                                        Nombre
+                                    </EncabezadoOrdenable>
+                                    <EncabezadoOrdenable
+                                        campo="precio"
+                                        criterios={criterios}
+                                        onClick={alternarOrden}
+                                    >
+                                        Precio
+                                    </EncabezadoOrdenable>
+                                    <EncabezadoOrdenable
+                                        campo="estado"
+                                        criterios={criterios}
+                                        onClick={alternarOrden}
+                                    >
+                                        Estado
+                                    </EncabezadoOrdenable>
+                                    <TableHead className="text-right">
+                                        <span className="flex items-center justify-end gap-1">
+                                            Acciones
+                                        </span>
+                                    </TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
+                            </TableHeader>
+                            <TableBody>
+                                {extrasOrdenados.map((extra) => (
+                                    <TableRow key={extra.id}>
+                                        <TableCell className="font-medium">{extra.nombre}</TableCell>
+                                        <TableCell>
+                                            {/* Mismo chip con ícono que en el detalle, para que
+                                                el precio se reconozca de un vistazo en toda la
+                                                app — no solo texto plano. toLocaleString("es-CR")
+                                                da formato "25 000" en vez de "25000". */}
+                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                                                <Wallet className="h-3.5 w-3.5 text-primary" />
+                                                ₡{Number(extra.precio).toLocaleString("es-CR")}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge
+                                                variant={extra.activo ? "default" : "secondary"}
+                                                className={extra.activo ? "bg-primary text-primary-foreground" : ""}
+                                            >
+                                                {extra.activo ? "Activo" : "Inactivo"}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="flex flex-wrap justify-end gap-2">
+                                            <Button asChild variant="outline" size="sm">
+                                                <Link to={`/extras/${extra.id}`}>Ver detalle</Link>
+                                            </Button>
+
+                                            {/* Editar y Activar/Desactivar solo para Administrador,
+                                                igual que en Tours. Un Cliente o Empleado ni siquiera
+                                                ve estos botones renderizados en el DOM. */}
+                                            {esAdmin && (
+                                                <>
+                                                    <Button asChild variant="outline" size="sm">
+                                                        <Link to={`/extras/${extra.id}/editar`}>Editar</Link>
+                                                    </Button>
+                                                    <Button
+                                                        variant={extra.activo ? "destructive" : "default"}
+                                                        size="sm"
+                                                        onClick={() => handleCambiarEstado(extra)}
+                                                    >
+                                                        {extra.activo ? "Desactivar" : "Activar"}
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </>
             )}
         </div>
     )

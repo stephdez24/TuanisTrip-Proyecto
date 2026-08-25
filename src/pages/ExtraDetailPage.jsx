@@ -1,4 +1,5 @@
 import { Link, useParams } from "react-router-dom"
+import { PackagePlus, Wallet } from "lucide-react"
 
 import { useAuth } from "@/auth/useAuth"
 import { useFetch } from "@/lib/useFetch"
@@ -6,7 +7,7 @@ import { extrasService } from "@/services/extrasService"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function ExtraDetailPage() {
@@ -26,7 +27,7 @@ export default function ExtraDetailPage() {
     if (loading) {
         return (
             <div className="mx-auto max-w-xl px-4 py-10">
-                <Skeleton className="h-48 w-full rounded-xl" />
+                <Skeleton className="h-64 w-full rounded-xl" />
             </div>
         )
     }
@@ -46,32 +47,59 @@ export default function ExtraDetailPage() {
 
     return (
         <div className="mx-auto max-w-xl px-4 py-10">
-            <Card>
-                <CardHeader>
+            <Card className="overflow-hidden pt-0">
+                {/* Los extras no tienen imagen en el modelo de datos (a
+                    diferencia de Tours), así que en vez de una foto se usa
+                    una franja de color de marca con un ícono — mismo
+                    propósito visual (anclar la pantalla arriba), sin
+                    inventar una foto que no existe. */}
+                <div className="bg-primary px-5 py-8 text-primary-foreground">
                     <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-2xl">{extra.nombre}</CardTitle>
-                        <Badge variant={extra.activo ? "default" : "secondary"}>
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15">
+                                <PackagePlus className="h-5 w-5" />
+                            </span>
+                            <h1 className="text-xl font-bold">{extra.nombre}</h1>
+                        </div>
+                        <Badge
+                            variant={extra.activo ? "default" : "secondary"}
+                            className={extra.activo ? "bg-primary-foreground/15 text-primary-foreground" : ""}
+                        >
                             {extra.activo ? "Activo" : "Inactivo"}
                         </Badge>
                     </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <p className="text-muted-foreground">{extra.descripcion}</p>
-                    <p className="text-xl font-semibold">
-                        ₡{Number(extra.precio).toLocaleString("es-CR")}
+                </div>
+
+                {/* divide-y: mismo patrón que en Tours/Guías — cada bloque de
+                    info queda separado por una línea sutil. */}
+                <CardContent className="divide-y divide-border p-0">
+                    <p className="px-5 pb-4 text-sm leading-relaxed text-muted-foreground">
+                        {extra.descripcion}
                     </p>
 
-                    <div className="flex flex-wrap gap-3 pt-2">
-                        <Button asChild>
-                            <Link to="/extras">Volver a Extras</Link>
-                        </Button>
+                    <div className="px-5 py-4">
+                        <div className="flex w-fit items-center gap-2 rounded-lg bg-secondary px-4 py-3">
+                            <Wallet className="h-5 w-5 text-primary" />
+                            <p className="text-sm">
+                                <span className="text-lg font-semibold text-primary">
+                                    ₡{Number(extra.precio).toLocaleString("es-CR")}
+                                </span>{" "}
+                                <span className="text-muted-foreground">por reserva</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 px-5 py-4">
                         {/* Solo el Admin puede editar; el resto de roles ven la
                             info en modo "solo lectura", sin este botón. */}
                         {esAdmin && (
-                            <Button asChild variant="outline">
+                            <Button asChild size="sm">
                                 <Link to={`/extras/${extra.id}/editar`}>Editar</Link>
                             </Button>
                         )}
+                        <Button asChild variant="outline" size="sm">
+                            <Link to="/extras">Volver a Extras</Link>
+                        </Button>
                     </div>
                 </CardContent>
             </Card>

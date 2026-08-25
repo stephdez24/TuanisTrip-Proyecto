@@ -32,6 +32,20 @@ export default function MiAgendaPage() {
         [empleadoId, fecha]
     )
 
+    // El endpoint de agenda excluye a propósito las citas Canceladas y
+    // Finalizadas (bloqueaDisponibilidad: false en el seed del backend) —
+    // tiene sentido para "qué horarios están ocupados", pero como guía
+    // también interesa ver que ALGO existió ese día aunque se haya
+    // cancelado. Usamos listarPorEmpleado (trae todo, sin filtrar estado)
+    // y filtramos por fecha acá, del lado del FrontEnd.
+    const { data: todasMisCitas } = useFetch(
+        () => citasService.listarPorEmpleado(empleadoId),
+        [empleadoId]
+    )
+    const citasNoActivasEseDia = (todasMisCitas ?? []).filter(
+        (c) => c.fecha === fecha && !c.estadoCita?.bloqueaDisponibilidad
+    )
+
     if (!empleadoId) {
         return (
             <div className="max-w-3xl mx-auto p-6">
@@ -152,6 +166,37 @@ export default function MiAgendaPage() {
                             ))
                         )}
                     </div>
+
+                    {/* Citas de esta fecha que ya NO ocupan horario (canceladas o
+                        finalizadas) — informativas, separadas de las activas de
+                        arriba para no confundir "ocupado" con "historial". */}
+                    {citasNoActivasEseDia.length > 0 && (
+                        <div className="space-y-2">
+                            <h2 className="font-semibold text-muted-foreground">
+                                Otras citas de este día (no ocupan horario)
+                            </h2>
+                            {citasNoActivasEseDia.map((cita) => (
+                                <Card key={cita.id} className="opacity-75">
+                                    <CardContent className="p-4 flex items-center justify-between gap-4">
+                                        <div>
+                                            <p className="font-semibold">{cita.servicio?.nombre}</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                Cliente: {cita.cliente?.nombre} {cita.cliente?.primerApellido}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-medium">
+                                                {cita.horaInicio} – {cita.horaFin}
+                                            </p>
+                                            <Badge className={clasesEstadoColor(cita.estadoCita?.color)}>
+                                                {cita.estadoCita?.nombre}
+                                            </Badge>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
                 </>
             )}
         </div>

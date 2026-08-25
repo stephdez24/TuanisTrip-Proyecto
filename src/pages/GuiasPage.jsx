@@ -2,8 +2,11 @@ import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
+import { Compass, CalendarCheck } from "lucide-react"
+
 import { useAuth } from "@/auth/useAuth"
 import { useFetch } from "@/lib/useFetch"
+import { useOrdenamiento } from "@/lib/useOrdenamiento"
 import { empleadosService } from "@/services/empleadosService"
 import { especialidadesService } from "@/services/especialidadesService"
 import { getImagenLocalGuia } from "@/lib/imagenLocal"
@@ -12,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import SelectorOrden from "@/components/SelectorOrden"
 import {
     Card,
     CardContent,
@@ -30,6 +34,15 @@ import {
 const TODAS = "todas"
 const IMAGEN_POR_DEFECTO =
     "https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=400&auto=format&fit=crop"
+
+const OPCIONES_ORDEN = [
+    { value: "nombre:asc", label: "Nombre (A-Z)" },
+    { value: "nombre:desc", label: "Nombre (Z-A)" },
+    { value: "tours:desc", label: "Más tours asignados" },
+    { value: "tours:asc", label: "Menos tours asignados" },
+    { value: "reservas:desc", label: "Más reservas totales" },
+    { value: "reservas:asc", label: "Menos reservas totales" },
+]
 
 export default function GuiasPage() {
     const { rol } = useAuth()
@@ -66,6 +79,19 @@ export default function GuiasPage() {
         })
     }, [guias, busqueda, especialidadId])
 
+    // El ordenamiento se aplica DESPUÉS del filtro de búsqueda/especialidad
+    // — son dos pasos independientes: primero se decide QUIÉNES entran a
+    // la lista, luego en QUÉ ORDEN se muestran.
+    const { datosOrdenados: guiasOrdenados, criterios, establecerOrden } = useOrdenamiento(
+        guiasFiltrados,
+        {
+            nombre: (g) => `${g.usuario?.nombre} ${g.usuario?.primerApellido}`.toLowerCase(),
+            tours: (g) => g.servicios?.length ?? 0,
+            reservas: (g) => g._count?.citas ?? 0,
+        },
+        null
+    )
+
     const hayFiltrosActivos = busqueda !== "" || especialidadId !== TODAS
 
     function limpiarFiltros() {
@@ -99,7 +125,7 @@ export default function GuiasPage() {
                 )}
             </div>
 
-            <div className="mb-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Input
                     placeholder="Buscar por nombre o código..."
                     value={busqueda}
@@ -126,12 +152,19 @@ export default function GuiasPage() {
                         ))}
                     </SelectContent>
                 </Select>
+
+                <SelectorOrden
+                    opciones={OPCIONES_ORDEN}
+                    criterios={criterios}
+                    onCambiar={establecerOrden}
+                    className="w-full sm:w-56"
+                />
             </div>
 
             {!loading && !error && guias && (
                 <p className="mb-4 text-sm text-muted-foreground">
-                    {guiasFiltrados.length}{" "}
-                    {guiasFiltrados.length === 1 ? "guía encontrado" : "guías encontrados"}
+                    {guiasOrdenados.length}{" "}
+                    {guiasOrdenados.length === 1 ? "guía encontrado" : "guías encontrados"}
                 </p>
             )}
 
@@ -149,7 +182,7 @@ export default function GuiasPage() {
                 </p>
             )}
 
-            {!loading && !error && guiasFiltrados.length === 0 && (
+            {!loading && !error && guiasOrdenados.length === 0 && (
                 <div className="flex flex-col items-center gap-3 py-16 text-center">
                     <p className="text-muted-foreground">
                         {hayFiltrosActivos
@@ -164,32 +197,56 @@ export default function GuiasPage() {
                 </div>
             )}
 
-            {!loading && !error && guiasFiltrados.length > 0 && (
+            {!loading && !error && guiasOrdenados.length > 0 && (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {guiasFiltrados.map((guia) => (
-                        <Card key={guia.id} className="overflow-hidden pt-0">
-                            <img
-                                src={getImagenLocalGuia(guia.id) || IMAGEN_POR_DEFECTO}
-                                alt={`${guia.usuario?.nombre} ${guia.usuario?.primerApellido}`}
-                                className="h-40 w-full object-cover"
-                            />
-                            <CardHeader>
-                                <div className="flex items-start justify-between gap-2">
-                                    <CardTitle className="text-lg">
-                                        {guia.usuario?.nombre} {guia.usuario?.primerApellido}
-                                    </CardTitle>
-                                    <Badge variant={guia.activo ? "default" : "secondary"}>
+                    {guiasOrdenados.map((guia) => (
+                        <Card
+                            key={guia.id}
+                            className="group overflow-hidden pt-0 transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                        >
+                            <div className="relative">
+                                <img
+                                    src={getImagenLocalGuia(guia.id) || IMAGEN_POR_DEFECTO}
+                                    alt={`${guia.usuario?.nombre} ${guia.usuario?.primerApellido}`}
+                                    className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
+                                {/* Degradado oscuro fijo (no depende del contenido de la
+                                    foto) para que las insignias se lean bien incluso sobre
+                                    fotos claras o con texto de fondo (letreros, etc.). */}
+                                <div className="absolute inset-x-0 top-0 h-20 bg-linear-to-b from-black/60 to-transparent" />
+                                <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
+                                    <Badge className="bg-primary text-primary-foreground">
+                                        {guia.especialidad?.nombre}
+                                    </Badge>
+                                    <Badge
+                                        variant={guia.activo ? "default" : "secondary"}
+                                        className={guia.activo ? "bg-primary text-primary-foreground" : ""}
+                                    >
                                         {guia.activo ? "Activo" : "Inactivo"}
                                     </Badge>
                                 </div>
-                                <p className="text-sm text-muted-foreground">
-                                    {guia.especialidad?.nombre} · {guia.codigoEmpleado}
+                            </div>
+
+                            <CardHeader>
+                                <CardTitle className="text-lg text-primary">
+                                    {guia.usuario?.nombre} {guia.usuario?.primerApellido}
+                                </CardTitle>
+                                <p className="font-mono text-xs text-muted-foreground">
+                                    {guia.codigoEmpleado}
                                 </p>
                             </CardHeader>
 
-                            <CardContent className="space-y-1 text-sm text-muted-foreground">
-                                <p>{guia.servicios?.length ?? 0} tours asignados</p>
-                                <p>{guia._count?.citas ?? 0} reservas totales</p>
+                            <CardContent>
+                                <div className="flex flex-wrap gap-2">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+                                        <Compass className="h-3.5 w-3.5" />
+                                        {guia.servicios?.length ?? 0} tours
+                                    </span>
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+                                        <CalendarCheck className="h-3.5 w-3.5" />
+                                        {guia._count?.citas ?? 0} reservas
+                                    </span>
+                                </div>
                             </CardContent>
 
                             <CardFooter className="flex flex-wrap gap-2">

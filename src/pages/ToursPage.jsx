@@ -1,20 +1,21 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
+import { Wallet, Clock } from "lucide-react"
 
 import { useAuth } from "@/auth/useAuth"
 import { useFetch } from "@/lib/useFetch"
+import { useOrdenamiento } from "@/lib/useOrdenamiento"
 import { serviciosService } from "@/services/serviciosService"
 import { getImagenLocal } from "@/lib/imagenLocal"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import SelectorOrden from "@/components/SelectorOrden"
 import {
     Card,
     CardContent,
     CardFooter,
-    CardHeader,
-    CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -23,6 +24,15 @@ import { Skeleton } from "@/components/ui/skeleton"
 // subida de imágenes en el API).
 const IMAGEN_POR_DEFECTO =
     "https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=600&auto=format&fit=crop"
+
+const OPCIONES_ORDEN = [
+    { value: "nombre:asc", label: "Nombre (A-Z)" },
+    { value: "nombre:desc", label: "Nombre (Z-A)" },
+    { value: "precio:desc", label: "Precio: mayor a menor" },
+    { value: "precio:asc", label: "Precio: menor a mayor" },
+    { value: "duracion:desc", label: "Duración: más larga primero" },
+    { value: "duracion:asc", label: "Duración: más corta primero" },
+]
 
 export default function ToursPage() {
     const { rol } = useAuth()
@@ -37,6 +47,16 @@ export default function ToursPage() {
     const { data: tours, loading, error } = useFetch(
         () => serviciosService.listar(),
         [refrescarClave]
+    )
+
+    const { datosOrdenados: toursOrdenados, criterios, establecerOrden } = useOrdenamiento(
+        tours,
+        {
+            nombre: (t) => t.nombre?.toLowerCase() ?? "",
+            precio: (t) => Number(t.precioBase),
+            duracion: (t) => t.duracionMinutos,
+        },
+        null
     )
 
     async function handleCambiarEstado(tour) {
@@ -55,7 +75,7 @@ export default function ToursPage() {
 
     return (
         <div className="mx-auto max-w-6xl px-4 py-10">
-            <div className="mb-8 flex items-center justify-between">
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-semibold">Tours</h1>
                     <p className="text-muted-foreground">
@@ -63,11 +83,18 @@ export default function ToursPage() {
                     </p>
                 </div>
 
-                {esAdmin && (
-                    <Button asChild>
-                        <Link to="/tours/nuevo">Nuevo tour</Link>
-                    </Button>
-                )}
+                <div className="flex items-center gap-3">
+                    <SelectorOrden
+                        opciones={OPCIONES_ORDEN}
+                        criterios={criterios}
+                        onCambiar={establecerOrden}
+                    />
+                    {esAdmin && (
+                        <Button asChild>
+                            <Link to="/tours/nuevo">Nuevo tour</Link>
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {/* Skeletons en vez de un simple "Cargando...": se ve más parecido
@@ -86,49 +113,63 @@ export default function ToursPage() {
                 </p>
             )}
 
-            {!loading && !error && tours?.length === 0 && (
+            {!loading && !error && toursOrdenados?.length === 0 && (
                 <p className="text-center text-muted-foreground">
                     Todavía no hay tours registrados.
                 </p>
             )}
 
-            {!loading && !error && tours?.length > 0 && (
+            {!loading && !error && toursOrdenados?.length > 0 && (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {tours.map((tour) => (
-                        <Card key={tour.id} className="flex flex-col overflow-hidden pt-0">
-                            <img
-                                src={getImagenLocal(tour.id) || IMAGEN_POR_DEFECTO}
-                                alt={tour.nombre}
-                                className="h-40 w-full object-cover"
-                            />
-
-                            <CardHeader>
-                                <div className="flex items-start justify-between gap-2">
-                                    <CardTitle className="text-lg">{tour.nombre}</CardTitle>
-                                    <Badge variant={tour.activo ? "default" : "secondary"}>
+                    {toursOrdenados.map((tour) => (
+                        <Card
+                            key={tour.id}
+                            className="group flex flex-col overflow-hidden pt-0 transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                        >
+                            <div className="relative">
+                                <img
+                                    src={getImagenLocal(tour.id) || IMAGEN_POR_DEFECTO}
+                                    alt={tour.nombre}
+                                    className="h-44 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
+                                {/* Degradado fijo (no depende de la foto de fondo), para
+                                    que las insignias se lean bien sobre cualquier imagen. */}
+                                <div className="absolute inset-x-0 top-0 h-16 bg-linear-to-b from-black/60 to-transparent" />
+                                <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
+                                    <Badge className="bg-primary text-primary-foreground">
+                                        {tour.especialidad?.nombre}
+                                    </Badge>
+                                    <Badge
+                                        variant={tour.activo ? "default" : "secondary"}
+                                        className={tour.activo ? "bg-primary text-primary-foreground" : ""}
+                                    >
                                         {tour.activo ? "Disponible" : "Inactivo"}
                                     </Badge>
                                 </div>
-                                {/* tour.especialidad viene incluido directo en la respuesta
-                                    del API (el backend hace el include de Prisma por
-                                    nosotros) — no hace falta una segunda llamada. */}
-                                <p className="text-sm text-muted-foreground">
-                                    {tour.especialidad?.nombre}
-                                </p>
-                            </CardHeader>
+                            </div>
 
-                            <CardContent className="flex-1 space-y-1 text-sm">
-                                <p className="line-clamp-2 text-muted-foreground">
-                                    {tour.descripcion}
-                                </p>
-                                {/* toLocaleString("es-CR") -> "25 000" en vez de "25000":
-                                    el enunciado exige formato legible, nada de valores crudos. */}
-                                <p className="font-semibold">
-                                    ₡{Number(tour.precioBase).toLocaleString("es-CR")} / persona
-                                </p>
-                                <p className="text-muted-foreground">
-                                    {tour.duracionMinutos} minutos
-                                </p>
+                            <CardContent className="flex-1 space-y-3">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-primary">
+                                        {tour.nombre}
+                                    </h3>
+                                    <p className="line-clamp-2 text-sm text-muted-foreground">
+                                        {tour.descripcion}
+                                    </p>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+                                        <Wallet className="h-3.5 w-3.5" />
+                                        {/* toLocaleString("es-CR") -> "25 000" en vez de "25000":
+                                            el enunciado exige formato legible, nada de valores crudos. */}
+                                        ₡{Number(tour.precioBase).toLocaleString("es-CR")}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+                                        <Clock className="h-3.5 w-3.5" />
+                                        {tour.duracionMinutos} min
+                                    </span>
+                                </div>
                             </CardContent>
 
                             <CardFooter className="flex flex-wrap gap-2">

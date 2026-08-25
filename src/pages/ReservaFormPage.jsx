@@ -41,7 +41,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 export default function ReservaFormPage() {
     const { id } = useParams()
     const esEdicion = Boolean(id)
-    const { user } = useAuth()
+    const { user, rol, empleadoId: propioEmpleadoId } = useAuth()
+    const esEmpleado = rol === "Empleado"
     const navigate = useNavigate()
 
     const [enviando, setEnviando] = useState(false)
@@ -56,6 +57,27 @@ export default function ReservaFormPage() {
     const { data: extras } = useFetch(() => extrasService.listarActivos(), [])
     const { data: estados } = useFetch(() => estadosCitaService.listar(), [])
     const { data: horarios } = useFetch(() => horariosService.listar(), [])
+
+    // Cuando el rol es Empleado, un guía solo debería reservarse tours a sí
+    // mismo (el enunciado no lo prohíbe explícitamente para "Crear", pero
+    // así lo decidió el equipo por sentido de negocio — ver detalle del
+    // propio empleado para saber qué tours puede atender).
+    const { data: propioEmpleado } = useFetch(
+        () =>
+            esEmpleado
+                ? empleadosService.obtenerPorId(propioEmpleadoId)
+                : Promise.resolve({ data: null }),
+        [esEmpleado, propioEmpleadoId]
+    )
+
+    // Lista de tours a mostrar en el Select: todos para Admin, o solo los
+    // asignados al propio guía cuando el rol es Empleado.
+    const toursDisponibles = useMemo(() => {
+        if (!esEmpleado) return tours ?? []
+        if (!propioEmpleado) return []
+        const idsPropios = new Set(propioEmpleado.servicios?.map((s) => s.id))
+        return (tours ?? []).filter((t) => idsPropios.has(t.id))
+    }, [tours, esEmpleado, propioEmpleado])
 
     const form = useForm({
         resolver: zodResolver(reservaSchema),
@@ -83,20 +105,25 @@ export default function ReservaFormPage() {
 
     // Guías filtrados: solo los que SÍ pueden atender el tour seleccionado
     // (el API mismo hace este filtro con ?servicioId=, no lo hacemos a mano).
+    // No se usa cuando el rol es Empleado (el guía ya está fijo en sí mismo).
     const { data: empleadosDisponibles, loading: cargandoEmpleados } = useFetch(
-        () => (servicioId ? empleadosService.listarActivos(servicioId) : Promise.resolve({ data: [] })),
-        [servicioId]
+        () =>
+            !esEmpleado && servicioId
+                ? empleadosService.listarActivos(servicioId)
+                : Promise.resolve({ data: [] }),
+        [servicioId, esEmpleado]
     )
 
-    // Agenda del guía en la fecha elegida — solo para MOSTRAR ocupación,
-    // la validación real la hace igual el endpoint de disponibilidad.
-    const { data: agenda } = useFetch(
-        () =>
-            empleadoId && fecha
-                ? citasService.agendaEmpleado(empleadoId, fecha)
-                : Promise.resolve({ data: null }),
-        [empleadoId, fecha]
-    )
+    // Si el rol es Empleado, el guía queda fijo en sí mismo apenas se sabe
+    // su propio id — no se limpia cuando cambia el tour (a diferencia del
+    // Admin), porque los tours que ve ya están filtrados a los que puede
+    // atender, así que su propio id siempre sigue siendo válido.
+    useEffect(() => {
+        if (esEmpleado && propioEmpleadoId) {
+            form.setValue("empleadoId", String(propioEmpleadoId))
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [esEmpleado, propioEmpleadoId])
 
     // --- En modo edición: cargar la cita existente ---
     useEffect(() => {
@@ -136,11 +163,15 @@ export default function ReservaFormPage() {
 
         form.setValue("precioServicio", tour.precioBase)
         form.setValue("duracionMinutos", tour.duracionMinutos)
-        // Si el guía que estaba elegido ya no puede atender el nuevo tour,
-        // lo limpiamos para forzar a elegir uno válido.
-        form.setValue("empleadoId", "")
+        // Si el que estaba elegido ya no puede atender el nuevo tour, lo
+        // limpiamos para forzar a elegir uno válido — pero NO cuando el rol
+        // es Empleado, porque su propio id siempre sigue siendo válido
+        // (los tours que ve ya vienen filtrados a los suyos).
+        if (!esEmpleado) {
+            form.setValue("empleadoId", "")
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [servicioId, tours])
+    }, [servicioId, tours, esEmpleado])
 
     // --- Recalcular costo de extras cuando cambia la selección ---
     useEffect(() => {
@@ -342,19 +373,24 @@ export default function ReservaFormPage() {
                                                         {(value) =>
                                                             !value
                                                                 ? "Selecciona un tour"
-                                                                : tours?.find((t) => String(t.id) === value)?.nombre
+                                                                : toursDisponibles?.find((t) => String(t.id) === value)?.nombre
                                                         }
                                                     </SelectValue>
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                {tours?.map((t) => (
+                                                {toursDisponibles?.map((t) => (
                                                     <SelectItem key={t.id} value={String(t.id)}>
                                                         {t.nombre} — {t.duracionMinutos} min
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
+                                        {esEmpleado && toursDisponibles?.length === 0 && (
+                                            <p className="text-sm text-muted-foreground">
+                                                No tienes tours asignados todavía.
+                                            </p>
+                                        )}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -404,59 +440,73 @@ export default function ReservaFormPage() {
                                 )}
                             />
 
-                            <FormField
-                                control={form.control}
-                                name="empleadoId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Guía</FormLabel>
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            value={field.value ? String(field.value) : ""}
-                                            disabled={!servicioId || cargandoEmpleados}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue
-                                                        placeholder={
-                                                            servicioId
-                                                                ? "Selecciona un guía"
-                                                                : "Primero elige un tour"
-                                                        }
-                                                    >
-                                                        {(value) => {
-                                                            if (!value) {
-                                                                return servicioId
+                            {/* Guía: fijo en sí mismo cuando el rol es Empleado (sin
+                                selector, no hay nada que elegir); Select normal para
+                                Administrador, igual que antes. */}
+                            {esEmpleado ? (
+                                <div>
+                                    <p className="mb-1.5 text-sm font-medium">Guía</p>
+                                    <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
+                                        {propioEmpleado
+                                            ? `${propioEmpleado.usuario?.nombre} ${propioEmpleado.usuario?.primerApellido} (tú)`
+                                            : "Cargando..."}
+                                    </div>
+                                </div>
+                            ) : (
+                                <FormField
+                                    control={form.control}
+                                    name="empleadoId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Guía</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                value={field.value ? String(field.value) : ""}
+                                                disabled={!servicioId || cargandoEmpleados}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue
+                                                            placeholder={
+                                                                servicioId
                                                                     ? "Selecciona un guía"
                                                                     : "Primero elige un tour"
                                                             }
-                                                            const e = empleadosDisponibles?.find(
-                                                                (e) => String(e.id) === value
-                                                            )
-                                                            return e
-                                                                ? `${e.usuario?.nombre} ${e.usuario?.primerApellido}`
-                                                                : null
-                                                        }}
-                                                    </SelectValue>
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {empleadosDisponibles?.map((e) => (
-                                                    <SelectItem key={e.id} value={String(e.id)}>
-                                                        {e.usuario?.nombre} {e.usuario?.primerApellido}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        {servicioId && !cargandoEmpleados && empleadosDisponibles?.length === 0 && (
-                                            <p className="text-sm text-muted-foreground">
-                                                Ningún guía activo puede atender este tour todavía.
-                                            </p>
-                                        )}
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                                                        >
+                                                            {(value) => {
+                                                                if (!value) {
+                                                                    return servicioId
+                                                                        ? "Selecciona un guía"
+                                                                        : "Primero elige un tour"
+                                                                }
+                                                                const e = empleadosDisponibles?.find(
+                                                                    (e) => String(e.id) === value
+                                                                )
+                                                                return e
+                                                                    ? `${e.usuario?.nombre} ${e.usuario?.primerApellido}`
+                                                                    : null
+                                                            }}
+                                                        </SelectValue>
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {empleadosDisponibles?.map((e) => (
+                                                        <SelectItem key={e.id} value={String(e.id)}>
+                                                            {e.usuario?.nombre} {e.usuario?.primerApellido}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            {servicioId && !cargandoEmpleados && empleadosDisponibles?.length === 0 && (
+                                                <p className="text-sm text-muted-foreground">
+                                                    Ningún guía activo puede atender este tour todavía.
+                                                </p>
+                                            )}
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
 
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField
@@ -503,34 +553,8 @@ export default function ReservaFormPage() {
                             )}
 
                             {/* Agenda del guía ese día — solo informativa */}
-                            {empleadoId && fecha && agenda && (
-                                <div className="rounded-lg border p-3 text-sm">
-                                    <p className="mb-2 font-medium">
-                                        Agenda de {agenda.empleado?.usuario?.nombre} el{" "}
-                                        {new Date(fecha + "T00:00:00").toLocaleDateString("es-CR")}
-                                    </p>
-                                    {agenda.citas?.length > 0 ? (
-                                        <ul className="space-y-1 text-muted-foreground">
-                                            {agenda.citas.map((c) => (
-                                                <li key={c.id}>
-                                                    {c.horaInicio}–{c.horaFin}: ocupado ({c.servicio?.nombre})
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    ) : (
-                                        <p className="text-muted-foreground">Sin citas registradas ese día.</p>
-                                    )}
-                                    {agenda.restricciones?.length > 0 && (
-                                        <ul className="mt-1 space-y-1 text-destructive">
-                                            {agenda.restricciones.map((r) => (
-                                                <li key={r.id}>
-                                                    Restricción: {r.todoElDia ? "Todo el día" : `${r.horaInicio}–${r.horaFin}`}{" "}
-                                                    ({r.motivo})
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
+                            {empleadoId && fecha && (
+                                <AgendaDelGuia empleadoId={empleadoId} fecha={fecha} />
                             )}
 
                             {/* Resultado de disponibilidad en tiempo real */}
@@ -617,6 +641,49 @@ export default function ReservaFormPage() {
                     </Form>
                 </CardContent>
             </Card>
+        </div>
+    )
+}
+
+// Pequeño subcomponente para la agenda informativa del guía elegido — se
+// separó del cuerpo principal solo para poder llamar useFetch con
+// parámetros ya garantizados (empleadoId y fecha no vacíos), sin ensuciar
+// el componente de arriba con otro condicional más.
+function AgendaDelGuia({ empleadoId, fecha }) {
+    const { data: agenda } = useFetch(
+        () => citasService.agendaEmpleado(empleadoId, fecha),
+        [empleadoId, fecha]
+    )
+
+    if (!agenda) return null
+
+    return (
+        <div className="rounded-lg border p-3 text-sm">
+            <p className="mb-2 font-medium">
+                Agenda de {agenda.empleado?.usuario?.nombre} el{" "}
+                {new Date(fecha + "T00:00:00").toLocaleDateString("es-CR")}
+            </p>
+            {agenda.citas?.length > 0 ? (
+                <ul className="space-y-1 text-muted-foreground">
+                    {agenda.citas.map((c) => (
+                        <li key={c.id}>
+                            {c.horaInicio}–{c.horaFin}: ocupado ({c.servicio?.nombre})
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p className="text-muted-foreground">Sin citas registradas ese día.</p>
+            )}
+            {agenda.restricciones?.length > 0 && (
+                <ul className="mt-1 space-y-1 text-destructive">
+                    {agenda.restricciones.map((r) => (
+                        <li key={r.id}>
+                            Restricción: {r.todoElDia ? "Todo el día" : `${r.horaInicio}–${r.horaFin}`}{" "}
+                            ({r.motivo})
+                        </li>
+                    ))}
+                </ul>
+            )}
         </div>
     )
 }

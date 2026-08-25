@@ -1,5 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
+import { Wallet, Clock, Users } from "lucide-react"
 
 import { useAuth } from "@/auth/useAuth"
 import { useFetch } from "@/lib/useFetch"
@@ -8,6 +9,7 @@ import { getImagenLocal } from "@/lib/imagenLocal"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const IMAGEN_POR_DEFECTO =
@@ -40,10 +42,8 @@ export default function TourDetailPage() {
 
     if (loading) {
         return (
-            <div className="mx-auto max-w-3xl px-4 py-10">
-                <Skeleton className="h-72 w-full rounded-xl" />
-                <Skeleton className="mt-4 h-8 w-2/3" />
-                <Skeleton className="mt-2 h-4 w-full" />
+            <div className="mx-auto max-w-2xl px-4 py-10">
+                <Skeleton className="h-96 w-full rounded-xl" />
             </div>
         )
     }
@@ -64,64 +64,91 @@ export default function TourDetailPage() {
     }
 
     return (
-        <div className="mx-auto max-w-3xl px-4 py-10">
-            <img
-                src={getImagenLocal(tour.id) || IMAGEN_POR_DEFECTO}
-                alt={tour.nombre}
-                className="h-80 w-full rounded-xl object-cover"
-            />
+        <div className="mx-auto max-w-2xl px-4 py-10">
+            <Card className="overflow-hidden pt-0">
+                {/* Foto con degradado + nombre encima, mismo lenguaje visual
+                    que el detalle de guía — el degradado es fijo (no depende
+                    del contenido de la foto), así el texto siempre se lee bien. */}
+                <div className="relative">
+                    <img
+                        src={getImagenLocal(tour.id) || IMAGEN_POR_DEFECTO}
+                        alt={tour.nombre}
+                        className="h-64 w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent" />
 
-            <div className="mt-6 flex items-start justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-semibold">{tour.nombre}</h1>
-                    <p className="text-muted-foreground">{tour.especialidad?.nombre}</p>
+                    <Badge
+                        className={`absolute right-3 top-3 ${
+                            tour.activo ? "bg-primary text-primary-foreground" : ""
+                        }`}
+                        variant={tour.activo ? "default" : "secondary"}
+                    >
+                        {tour.activo ? "Disponible" : "Inactivo"}
+                    </Badge>
+
+                    <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                        <h1 className="text-2xl font-bold">{tour.nombre}</h1>
+                        <p className="text-white/85">{tour.especialidad?.nombre}</p>
+                    </div>
                 </div>
-                <Badge variant={tour.activo ? "default" : "secondary"}>
-                    {tour.activo ? "Disponible" : "Inactivo"}
-                </Badge>
-            </div>
 
-            <p className="mt-4 text-muted-foreground">{tour.descripcion}</p>
-
-            <div className="mt-6 grid grid-cols-2 gap-4 rounded-xl border p-4 sm:grid-cols-3">
-                <div>
-                    <p className="text-sm text-muted-foreground">Precio por persona</p>
-                    <p className="text-lg font-semibold">
-                        ₡{Number(tour.precioBase).toLocaleString("es-CR")}
+                {/* divide-y: cada bloque de info queda separado por una línea
+                    sutil, igual que en el detalle de guía — se lee como
+                    secciones distintas, no como un párrafo continuo. */}
+                <CardContent className="divide-y divide-border p-0">
+                    <p className="px-5 pb-4 text-sm leading-relaxed text-muted-foreground">
+                        {tour.descripcion}
                     </p>
-                </div>
-                <div>
-                    <p className="text-sm text-muted-foreground">Duración</p>
-                    <p className="text-lg font-semibold">{tour.duracionMinutos} min</p>
-                </div>
-                <div>
-                    {/* tour.empleados viene incluido en obtenerPorId() del backend
-                        (son los guías que tienen este tour asignado). Todavía va a
-                        salir en 0 hasta que construyamos el módulo de Guías. */}
-                    <p className="text-sm text-muted-foreground">Guías disponibles</p>
-                    <p className="text-lg font-semibold">{tour.empleados?.length ?? 0}</p>
-                </div>
-            </div>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-                <Button asChild>
-                    <Link to="/tours">Volver a Tours</Link>
-                </Button>
+                    {/* Estadísticas con ícono, en vez de solo números sueltos —
+                        más fácil de escanear de un vistazo. */}
+                    <div className="grid grid-cols-3 gap-3 px-5 py-4">
+                        <div className="flex flex-col items-center gap-1 rounded-lg bg-secondary py-3 text-center">
+                            <Wallet className="h-4 w-4 text-primary" />
+                            <p className="text-xs text-muted-foreground">Por persona</p>
+                            <p className="text-sm font-semibold text-primary">
+                                ₡{Number(tour.precioBase).toLocaleString("es-CR")}
+                            </p>
+                        </div>
+                        <div className="flex flex-col items-center gap-1 rounded-lg bg-secondary py-3 text-center">
+                            <Clock className="h-4 w-4 text-primary" />
+                            <p className="text-xs text-muted-foreground">Duración</p>
+                            <p className="text-sm font-semibold text-primary">
+                                {tour.duracionMinutos} min
+                            </p>
+                        </div>
+                        <div className="flex flex-col items-center gap-1 rounded-lg bg-secondary py-3 text-center">
+                            <Users className="h-4 w-4 text-primary" />
+                            <p className="text-xs text-muted-foreground">Guías</p>
+                            {/* tour.empleados viene incluido en obtenerPorId() del
+                                backend (son los guías que tienen este tour asignado). */}
+                            <p className="text-sm font-semibold text-primary">
+                                {tour.empleados?.length ?? 0}
+                            </p>
+                        </div>
+                    </div>
 
-                {esAdmin && (
-                    <>
-                        <Button asChild variant="outline">
-                            <Link to={`/tours/${tour.id}/editar`}>Editar</Link>
+                    <div className="flex flex-wrap gap-2 px-5 py-4">
+                        {esAdmin && (
+                            <>
+                                <Button asChild size="sm">
+                                    <Link to={`/tours/${tour.id}/editar`}>Editar</Link>
+                                </Button>
+                                <Button
+                                    variant={tour.activo ? "destructive" : "default"}
+                                    size="sm"
+                                    onClick={handleCambiarEstado}
+                                >
+                                    {tour.activo ? "Desactivar" : "Activar"}
+                                </Button>
+                            </>
+                        )}
+                        <Button asChild variant="outline" size="sm">
+                            <Link to="/tours">Volver a Tours</Link>
                         </Button>
-                        <Button
-                            variant={tour.activo ? "destructive" : "default"}
-                            onClick={handleCambiarEstado}
-                        >
-                            {tour.activo ? "Desactivar" : "Activar"}
-                        </Button>
-                    </>
-                )}
-            </div>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     )
 }
