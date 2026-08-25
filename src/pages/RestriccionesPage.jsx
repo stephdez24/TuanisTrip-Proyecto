@@ -10,8 +10,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
-// Solo lectura a propósito: el enunciado no pide crear/editar/activar
-// restricciones desde el FrontEnd (ver nota en restriccionesHorarioService.js).
+// Solo lectura a propósito: el enunciado no pide crear/editar/activar 
+// restricciones desde el FrontEnd (ver nota en restriccionesHorarioService.js). 
 
 const FILTROS = [
     { id: "todas", label: "Todas" },
@@ -34,82 +34,209 @@ export default function RestriccionesPage() {
     })
 
     return (
-        <div className="max-w-4xl mx-auto p-6 space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-primary">
+        <div className="mx-auto max-w-5xl px-5 py-10 sm:px-6 lg:px-8">
+
+            {/* =========================================================
+                ENCABEZADO
+            ========================================================= */}
+
+            <div className="mb-8 border-l-4 border-ring pl-5">
+                <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl">
                     Bloqueos y temporadas especiales
                 </h1>
-                <p className="text-muted-foreground">
-                    Fechas y horarios en los que el establecimiento o un guía en
-                    particular no está disponible para reservas.
+
+                <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+                    Fechas y horarios en los que el establecimiento o un guía
+                    en particular no está disponible para reservas.
                 </p>
             </div>
 
-            <div className="flex gap-2">
+
+            {/* =========================================================
+                FILTROS
+            ========================================================= */}
+
+            <div className="mb-8 flex flex-wrap gap-2">
                 {FILTROS.map((f) => (
                     <button
                         key={f.id}
                         onClick={() => setFiltro(f.id)}
-                        className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
-                            filtro === f.id
-                                ? "bg-primary text-primary-foreground border-primary"
-                                : "bg-background text-foreground border-input hover:bg-secondary/50"
-                        }`}
+                        className={`
+                            rounded-full
+                            border
+                            px-5 py-2
+                            text-sm font-medium
+                            transition-all duration-200
+                            ${
+                                filtro === f.id
+                                    ? "border-primary bg-primary text-white shadow-sm hover:bg-primary/90"
+                                    : "border-input bg-background text-foreground hover:border-primary/40 hover:bg-secondary/40"
+                            }
+                        `}
                     >
                         {f.label}
                     </button>
                 ))}
             </div>
 
+
+            {/* =========================================================
+                ESTADOS
+            ========================================================= */}
+
             {loading && (
-                <p className="text-muted-foreground">Cargando restricciones...</p>
+                <div className="rounded-xl border border-border bg-card p-6 text-center">
+                    <p className="text-muted-foreground">
+                        Cargando restricciones...
+                    </p>
+                </div>
             )}
+
             {error && (
-                <p className="text-destructive">
-                    No se pudieron cargar las restricciones: {error.message}
-                </p>
+                <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center">
+                    <p className="text-destructive">
+                        No se pudieron cargar las restricciones: {error.message}
+                    </p>
+                </div>
             )}
 
             {!loading && !error && restriccionesFiltradas.length === 0 && (
-                <p className="text-muted-foreground">
-                    No hay restricciones registradas para este filtro.
-                </p>
+                <div className="rounded-xl border border-border bg-card p-8 text-center">
+                    <p className="text-muted-foreground">
+                        No hay restricciones registradas para este filtro.
+                    </p>
+                </div>
             )}
 
-            <div className="space-y-3">
-                {restriccionesFiltradas.map((r) => (
-                    <Link key={r.id} to={`/restricciones/${r.id}`}>
-                        <Card className="hover:border-primary/50 transition-colors">
-                            <CardContent className="p-4 flex items-center justify-between gap-4">
-                                <div className="space-y-1 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="font-semibold text-primary">
-                                            {formatearFechaRestriccion(r.fecha)}
-                                        </span>
-                                        <Badge variant="outline">
-                                            {r.tipoRestriccion?.nombre}
-                                        </Badge>
-                                        {!r.activo && (
-                                            <Badge variant="destructive">Inactiva</Badge>
-                                        )}
+
+            {/* =========================================================
+                LISTA DE RESTRICCIONES
+            ========================================================= */}
+
+            {!loading && !error && restriccionesFiltradas.length > 0 && (
+                <div className="space-y-4">
+                    {restriccionesFiltradas.map((r) => (
+                        <Link
+                            key={r.id}
+                            to={`/restricciones/${r.id}`}
+                            className="block"
+                        >
+                            <Card
+                                className="
+                                    overflow-hidden
+                                    rounded-2xl
+                                    border-border
+                                    bg-card
+                                    shadow-sm
+                                    transition-all
+                                    duration-200
+                                    hover:-translate-y-0.5
+                                    hover:border-primary/30
+                                    hover:shadow-md
+                                "
+                            >
+                                <CardContent className="p-0">
+
+                                    <div className="grid gap-0 md:grid-cols-[1fr_260px]">
+
+                                        {/* Información principal */}
+
+                                        <div className="px-6 py-6">
+
+                                            <div className="mb-4 flex flex-wrap items-center gap-2">
+
+                                                <span className="text-lg font-bold text-primary">
+                                                    {formatearFechaRestriccion(r.fecha)}
+                                                </span>
+
+                                                <Badge
+                                                    variant="outline"
+                                                    className="
+                                                        rounded-full
+                                                        border-border
+                                                        bg-background
+                                                        px-3
+                                                        font-normal
+                                                    "
+                                                >
+                                                    {r.tipoRestriccion?.nombre}
+                                                </Badge>
+
+                                                {!r.activo && (
+                                                    <Badge
+                                                        variant="destructive"
+                                                        className="rounded-full"
+                                                    >
+                                                        Inactiva
+                                                    </Badge>
+                                                )}
+
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                    Motivo
+                                                </p>
+
+                                                <p className="text-sm leading-7 text-foreground">
+                                                    {r.motivo}
+                                                </p>
+                                            </div>
+
+                                        </div>
+
+
+                                        {/* Información de horario y alcance */}
+
+                                        <div
+                                            className="
+                                                flex
+                                                min-w-[230px]
+                                                flex-col
+                                                justify-center
+                                                border-t
+                                                border-border
+                                                bg-muted/30
+                                                px-6
+                                                py-6
+                                                text-left
+                                                md:border-l
+                                                md:border-t-0
+                                                md:text-right
+                                            "
+                                        >
+
+                                            <div className="mb-4">
+                                                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                    Horario afectado
+                                                </p>
+
+                                                <p className="text-sm font-semibold text-primary">
+                                                    {textoHorarioRestriccion(r)}
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                    Alcance
+                                                </p>
+
+                                                <p className="text-sm text-foreground">
+                                                    {textoAlcanceRestriccion(r)}
+                                                </p>
+                                            </div>
+
+                                        </div>
+
                                     </div>
-                                    <p className="text-sm text-muted-foreground truncate">
-                                        {r.motivo}
-                                    </p>
-                                </div>
-                                <div className="text-right shrink-0 text-sm">
-                                    <p className="font-medium">
-                                        {textoHorarioRestriccion(r)}
-                                    </p>
-                                    <p className="text-muted-foreground">
-                                        {textoAlcanceRestriccion(r)}
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </Link>
-                ))}
-            </div>
+
+                                </CardContent>
+                            </Card>
+                        </Link>
+                    ))}
+                </div>
+            )}
+
         </div>
     )
 }

@@ -76,13 +76,19 @@ export default function Navbar() {
         // texto verde oscuro — no hace falta lógica extra, ya se adapta sola.
         <header className="sticky top-0 z-40 bg-primary text-primary-foreground">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+
                 <Link
                     to="/"
-                    className="flex items-center gap-2 text-xl font-semibold"
+                    className="flex items-center gap-3 text-xl font-semibold"
                     onClick={handleNavClick}
                 >
-                    <img src="/images/logoTuanisTrip.png" alt="" className="h-9 w-9" />
-                    Tuanis Trip
+                    <img
+                        src="/images/logoTuanisTrip.png"
+                        alt="Tuanis Trip"
+                        className="h-18 w-18 object-contain"
+                    />
+
+                    <span>Tuanis Trip</span>
                 </Link>
 
                 {/* El menú de navegación siempre vive detrás de la hamburguesa,
@@ -90,21 +96,68 @@ export default function Navbar() {
                     Administrador, un navbar horizontal se veía saturado incluso
                     en escritorio. El header solo muestra: logo, tema, y el
                     menú de usuario (avatar + estado de sesión). */}
-                <div className="flex items-center gap-1">
-                    <ThemeToggle />
-                    <UserMenu />
+                <div className="flex items-center gap-2">
+
+                    {/* Botón para cambiar entre modo claro y modo oscuro. */}
+                    <div
+                        className="
+                            flex h-10 w-10 items-center justify-center
+                            rounded-full
+                            border border-primary-foreground/20
+                            bg-primary-foreground/10
+                            shadow-sm
+                            transition-all
+                            hover:bg-primary-foreground/20
+                            hover:border-primary-foreground/40
+                            hover:scale-105
+                        "
+                    >
+                        <ThemeToggle />
+                    </div>
+
+                    {/* Menú del usuario con avatar y opciones de sesión. */}
+                    <div
+                        className="
+                            flex h-10 min-w-10 items-center justify-center
+                            rounded-full
+                            border border-primary-foreground/20
+                            bg-primary-foreground/10
+                            shadow-sm
+                            transition-all
+                            hover:bg-primary-foreground/20
+                            hover:border-primary-foreground/40
+                        "
+                    >
+                        <UserMenu />
+                    </div>
 
                     {/* Botón hamburguesa: SIEMPRE visible, es el único punto de
                         entrada a la navegación (sin lista horizontal aparte). */}
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                        className="
+                            h-10 w-10
+                            rounded-full
+                            border border-primary-foreground/20
+                            bg-primary-foreground/10
+                            text-primary-foreground
+                            shadow-sm
+                            transition-all
+                            hover:scale-105
+                            hover:bg-primary-foreground/20
+                            hover:border-primary-foreground/40
+                            hover:text-primary-foreground
+                        "
                         onClick={() => setMenuAbierto((abierto) => !abierto)}
                         aria-label={menuAbierto ? "Cerrar menú" : "Abrir menú"}
                         aria-expanded={menuAbierto}
                     >
-                        {menuAbierto ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                        {menuAbierto ? (
+                            <X className="h-5 w-5" />
+                        ) : (
+                            <Menu className="h-5 w-5" />
+                        )}
                     </Button>
                 </div>
             </div>
@@ -113,7 +166,7 @@ export default function Navbar() {
                 sutil para separarlo visualmente del header. Se comporta igual
                 en cualquier ancho de pantalla. */}
             {menuAbierto && (
-                <div className="border-t border-primary-foreground/15 bg-primary">
+                <div className="border-t border-primary-foreground/10 bg-primary">
                     <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-3">
                         {enlaces.map((enlace) => (
                             <NavLink
@@ -121,10 +174,10 @@ export default function Navbar() {
                                 to={enlace.to}
                                 onClick={handleNavClick}
                                 className={({ isActive }) =>
-                                    `rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                                    `rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                                         isActive
-                                            ? "bg-primary-foreground/10 text-ring"
-                                            : "text-primary-foreground/80 hover:bg-primary-foreground/10"
+                                            ? "bg-primary-foreground/15 text-ring shadow-sm"
+                                            : "text-primary-foreground/85 hover:bg-primary-foreground/10 hover:text-primary-foreground"
                                     }`
                                 }
                             >

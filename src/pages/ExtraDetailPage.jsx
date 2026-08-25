@@ -92,11 +92,15 @@ export default function ExtraDetailPage() {
                     <div className="flex flex-wrap gap-2 px-5 py-4">
                         {/* Solo el Admin puede editar; el resto de roles ven la
                             info en modo "solo lectura", sin este botón. */}
-                        {esAdmin && (
-                            <Button asChild size="sm">
-                                <Link to={`/extras/${extra.id}/editar`}>Editar</Link>
-                            </Button>
-                        )}
+                        {esAdmin && ( 
+                        <Button
+                            asChild
+                            size="sm"
+                            className="!bg-primary !text-white hover:!bg-primary hover:!text-white"
+                        > 
+                            <Link to={`/extras/${extra.id}/editar`}>Editar</Link> 
+                        </Button> 
+                    )}
                         <Button asChild variant="outline" size="sm">
                             <Link to="/extras">Volver a Extras</Link>
                         </Button>

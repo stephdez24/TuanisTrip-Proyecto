@@ -30,8 +30,11 @@ export default function TourDetailPage() {
         try {
             await serviciosService.cambiarEstado(tour.id, !tour.activo)
             toast.success(
-                tour.activo ? "Tour desactivado correctamente" : "Tour activado correctamente"
+                tour.activo
+                    ? "Tour desactivado correctamente"
+                    : "Tour activado correctamente"
             )
+
             // navigate(0) = recargar la ruta actual. Más simple que manejar un
             // segundo estado local solo para refrescar esta página específica.
             navigate(0)
@@ -54,8 +57,10 @@ export default function TourDetailPage() {
         return (
             <div className="mx-auto max-w-md px-4 py-16 text-center">
                 <p className="text-destructive">
-                    No se pudo cargar este tour{error ? `: ${error.message}` : ""}.
+                    No se pudo cargar este tour
+                    {error ? `: ${error.message}` : ""}.
                 </p>
+
                 <Button asChild variant="outline" className="mt-4">
                     <Link to="/tours">Volver a Tours</Link>
                 </Button>
@@ -66,6 +71,7 @@ export default function TourDetailPage() {
     return (
         <div className="mx-auto max-w-2xl px-4 py-10">
             <Card className="overflow-hidden pt-0">
+
                 {/* Foto con degradado + nombre encima, mismo lenguaje visual
                     que el detalle de guía — el degradado es fijo (no depende
                     del contenido de la foto), así el texto siempre se lee bien. */}
@@ -75,11 +81,14 @@ export default function TourDetailPage() {
                         alt={tour.nombre}
                         className="h-64 w-full object-cover"
                     />
+
                     <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent" />
 
                     <Badge
                         className={`absolute right-3 top-3 ${
-                            tour.activo ? "bg-primary text-primary-foreground" : ""
+                            tour.activo
+                                ? "bg-[#0d3528] !text-white"
+                                : ""
                         }`}
                         variant={tour.activo ? "default" : "secondary"}
                     >
@@ -87,8 +96,13 @@ export default function TourDetailPage() {
                     </Badge>
 
                     <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                        <h1 className="text-2xl font-bold">{tour.nombre}</h1>
-                        <p className="text-white/85">{tour.especialidad?.nombre}</p>
+                        <h1 className="text-2xl font-bold">
+                            {tour.nombre}
+                        </h1>
+
+                        <p className="text-white/85">
+                            {tour.especialidad?.nombre}
+                        </p>
                     </div>
                 </div>
 
@@ -96,6 +110,7 @@ export default function TourDetailPage() {
                     sutil, igual que en el detalle de guía — se lee como
                     secciones distintas, no como un párrafo continuo. */}
                 <CardContent className="divide-y divide-border p-0">
+
                     <p className="px-5 pb-4 text-sm leading-relaxed text-muted-foreground">
                         {tour.descripcion}
                     </p>
@@ -103,23 +118,40 @@ export default function TourDetailPage() {
                     {/* Estadísticas con ícono, en vez de solo números sueltos —
                         más fácil de escanear de un vistazo. */}
                     <div className="grid grid-cols-3 gap-3 px-5 py-4">
+
                         <div className="flex flex-col items-center gap-1 rounded-lg bg-secondary py-3 text-center">
                             <Wallet className="h-4 w-4 text-primary" />
-                            <p className="text-xs text-muted-foreground">Por persona</p>
+
+                            <p className="text-xs text-muted-foreground">
+                                Por persona
+                            </p>
+
                             <p className="text-sm font-semibold text-primary">
-                                ₡{Number(tour.precioBase).toLocaleString("es-CR")}
+                                ₡{Number(
+                                    tour.precioBase
+                                ).toLocaleString("es-CR")}
                             </p>
                         </div>
+
                         <div className="flex flex-col items-center gap-1 rounded-lg bg-secondary py-3 text-center">
                             <Clock className="h-4 w-4 text-primary" />
-                            <p className="text-xs text-muted-foreground">Duración</p>
+
+                            <p className="text-xs text-muted-foreground">
+                                Duración
+                            </p>
+
                             <p className="text-sm font-semibold text-primary">
                                 {tour.duracionMinutos} min
                             </p>
                         </div>
+
                         <div className="flex flex-col items-center gap-1 rounded-lg bg-secondary py-3 text-center">
                             <Users className="h-4 w-4 text-primary" />
-                            <p className="text-xs text-muted-foreground">Guías</p>
+
+                            <p className="text-xs text-muted-foreground">
+                                Guías
+                            </p>
+
                             {/* tour.empleados viene incluido en obtenerPorId() del
                                 backend (son los guías que tienen este tour asignado). */}
                             <p className="text-sm font-semibold text-primary">
@@ -129,22 +161,53 @@ export default function TourDetailPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-2 px-5 py-4">
+
                         {esAdmin && (
                             <>
-                                <Button asChild size="sm">
-                                    <Link to={`/tours/${tour.id}/editar`}>Editar</Link>
-                                </Button>
+                                {/* Editar: botón verde con letra blanca */}
                                 <Button
-                                    variant={tour.activo ? "destructive" : "default"}
+                                    asChild
                                     size="sm"
+                                    className="bg-[#0d3528] !text-white hover:bg-[#164b39] hover:!text-white"
+                                >
+                                    <Link to={`/tours/${tour.id}/editar`}>
+                                        Editar
+                                    </Link>
+                                </Button>
+
+                                {/* Activar/Desactivar:
+                                    Activar = verde con letra blanca.
+                                    Desactivar = mantiene el estilo rojo original. */}
+                                <Button
+                                    variant={
+                                        tour.activo
+                                            ? "destructive"
+                                            : "default"
+                                    }
+                                    size="sm"
+                                    className={
+                                        tour.activo
+                                            ? ""
+                                            : "bg-[#0d3528] !text-white hover:bg-[#164b39] hover:!text-white"
+                                    }
                                     onClick={handleCambiarEstado}
                                 >
-                                    {tour.activo ? "Desactivar" : "Activar"}
+                                    {tour.activo
+                                        ? "Desactivar"
+                                        : "Activar"}
                                 </Button>
                             </>
                         )}
-                        <Button asChild variant="outline" size="sm">
-                            <Link to="/tours">Volver a Tours</Link>
+
+                        {/* Este botón mantiene su estilo original */}
+                        <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                        >
+                            <Link to="/tours">
+                                Volver a Tours
+                            </Link>
                         </Button>
                     </div>
                 </CardContent>

@@ -75,10 +75,13 @@ export default function ExtrasPage() {
                     </p>
                 </div>
                 {esAdmin && (
-                    <Button asChild>
-                        <Link to="/extras/nuevo">Nuevo extra</Link>
-                    </Button>
-                )}
+                <Button
+                    asChild
+                    className="!bg-primary !text-white hover:!bg-primary hover:!text-white"
+                >
+                    <Link to="/extras/nuevo">Nuevo extra</Link>
+                </Button>
+            )}
             </div>
 
             {/* Los tres estados posibles de cualquier pantalla que consulta el
