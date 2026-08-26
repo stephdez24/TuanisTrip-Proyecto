@@ -50,6 +50,7 @@ const NAV_POR_ROL = {
 
 export default function Navbar() {
     const { rol } = useAuth()
+    //Recordar si el menú hamburguesa está abierto o cerrado
     const [menuAbierto, setMenuAbierto] = useState(false)
 
     const enlaces = NAV_POR_ROL[rol ?? "invitado"] ?? NAV_POR_ROL.invitado

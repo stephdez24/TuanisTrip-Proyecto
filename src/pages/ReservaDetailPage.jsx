@@ -45,6 +45,7 @@ export default function ReservaDetailPage() {
 
     const [motivoCancelacion, setMotivoCancelacion] = useState("")
     const [cancelando, setCancelando] = useState(false)
+    //Recordar si el diálogo de "Cancelar reserva" está abierto
     const [dialogoAbierto, setDialogoAbierto] = useState(false)
 
     const {

@@ -46,6 +46,8 @@ export default function TourFormPage() {
     // Vista previa de la imagen — separada del valor real del formulario
     // (que solo guarda el NOMBRE del archivo, no la URL) para poder
     // mostrar algo de inmediato al elegir un archivo nuevo.
+
+    //Recordar la foto que se está previsualizando antes de guardar
     const [previewUrl, setPreviewUrl] = useState(null)
     const [subiendoImagen, setSubiendoImagen] = useState(false)
 

@@ -28,6 +28,7 @@ function hoyISO() {
 
 export default function MiAgendaPage() {
     const { empleadoId } = useAuth()
+    //Recordar qué fecha eligió el usuario en el selector
     const [fecha, setFecha] = useState(hoyISO())
 
     const { data, loading, error } = useFetch(
